@@ -1,0 +1,5 @@
+i18n
+replace all panics by real error handling
+scripting system (lua, python, js? something else?)
+comments (code doc)
+user doc
