@@ -67,9 +67,11 @@ func (list *BanList) RemovePlayer(uuid, reason string) {
 
 // Returns the UUIDs that the list contains. (Can be empty.)
 func (list *BanList) GetPlayers() []string {
-	ret := make([]string, 0, len(list.players))
-	for player, _ := range list.players {
-		ret = append(ret, player)
+	ret := make([]string, len(list.players))
+	i := 0
+	for _, player := range list.players {
+		ret[i] = player
+		i++
 	}
 	return ret
 }
