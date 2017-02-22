@@ -17,14 +17,9 @@ type BanList struct {
 	players map[string]string
 }
 
-// used for JSON
-type jsonBanList struct {
-	profiles []jsonProfile `json:"profiles"`
-}
-
-type jsonProfile struct {
-	uuid   string `json:"uuid"`
-	reason string `json:"reason,omitempty"`
+type JsonProfile struct {
+	UUID   string `json:"uuid"`
+	Reason string `json:"reason"`
 }
 
 func NewBanList() *BanList {
@@ -34,25 +29,40 @@ func NewBanList() *BanList {
 }
 
 // Loads the list from the given file.
-func (list *BanList) LoadFile(path string) (err error) {
+func (list *BanList) LoadFile(path string) error {
 	content, err := ioutil.ReadFile(path)
 
 	if err != nil {
-		return
+		return err
 	}
 
-	var bans jsonBanList
+	bans := make([]JsonProfile, 0)
 	err = json.Unmarshal(content, &bans)
 
 	if err != nil {
 		return err
 	}
 
-	for _, profile := range bans.profiles {
-		list.players[profile.uuid] = profile.reason
+	for _, profile := range bans {
+		list.players[profile.UUID] = profile.Reason
 	}
 
-	return
+	return nil
+}
+
+// Saves the list to the given file.
+func (list *BanList) SaveFile(path string) error {
+	return nil
+}
+
+// Adds the given player to the list.
+func (list *BanList) AddPlayer(uuid, reason string) {
+	list.players[uuid] = reason
+}
+
+// Removes the given player from the list.
+func (list *BanList) RemovePlayer(uuid, reason string) {
+	delete(list.players, uuid)
 }
 
 // Returns the UUIDs that the list contains. (Can be empty.)
