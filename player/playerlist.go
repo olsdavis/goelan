@@ -61,7 +61,7 @@ func (list *BanList) AddPlayer(uuid, reason string) {
 }
 
 // Removes the given player from the list.
-func (list *BanList) RemovePlayer(uuid, reason string) {
+func (list *BanList) RemovePlayer(uuid string) {
 	delete(list.players, uuid)
 }
 
