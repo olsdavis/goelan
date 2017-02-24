@@ -70,9 +70,9 @@ func (manager *ChunkManager) GenerateChunk(chunk *Chunk) {
 }
 
 func chunkCoords(location SimpleLocation) (int, int, int) {
-	x := util.ClosestMultiple(location.X, 8) / 8
-	y := util.ClosestMultiple(location.Y, 8) / 8
-	z := util.ClosestMultiple(location.Z, 8) / 8
+	x := util.ClosestMultiple(location.X, ChunkSize) / ChunkSize
+	y := util.ClosestMultiple(location.Y, ChunkSize) / ChunkSize
+	z := util.ClosestMultiple(location.Z, ChunkSize) / ChunkSize
 
 	if location.X < 0 {
 		x = -x

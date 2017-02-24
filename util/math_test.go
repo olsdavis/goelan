@@ -17,6 +17,10 @@ func TestClosestMultiple(t *testing.T) {
 	if c := ClosestMultiple(31, 16); c != 16 {
 		t.Error("Closest multipe of 31 to 16 should be 16. Currently returns", c)
 	}
+
+	if c := ClosestMultiple(-16, 16); c != -16 {
+		t.Error("Closest multiple of -16 to 16 should be -16. Currently returns", c)
+	}
 }
 
 func TestSquareFloat32(t *testing.T) {
@@ -31,7 +35,7 @@ func TestSquareInt(t *testing.T) {
 	}
 }
 
-func TestMin2(t *testing.T) {
+func TestMin(t *testing.T) {
 	if c := Min(3, 2); c != 2 {
 		t.Error("Min of 3 and 2 should return 2. Currently returns", c)
 	}
