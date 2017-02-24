@@ -17,7 +17,7 @@ type Chunk struct {
 type ChunkManager struct {
 	world        World
 	chunkLock    sync.Mutex
-	loadedChunks [][][]Chunk
+	loadedChunks map[byte]map[byte]map[byte]Chunk // x to y to z to Chunk
 }
 
 // Returns the chunk at the given location.
@@ -47,7 +47,7 @@ func (manager *ChunkManager) LoadChunk(location SimpleLocation) *Chunk {
 	chunk := manager.GetChunkAtChunkCoordinates(x, y, z)
 	if chunk == nil {
 		chunk = &Chunk{
-			blocks: make([][][]byte, 0, ChunkSize * ChunkSize * ChunkSize),
+			blocks: make([][][]byte, 0, ChunkSize),
 			X: x,
 			Y: y,
 			Z: z,
@@ -62,6 +62,7 @@ func (manager *ChunkManager) LoadChunk(location SimpleLocation) *Chunk {
 	}
 }
 
+// Generates the given chunk.
 func (manager *ChunkManager) GenerateChunk(chunk *Chunk) {
 	if chunk == nil {
 		panic("chunk cannot be nil")

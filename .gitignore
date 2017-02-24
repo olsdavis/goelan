@@ -4,6 +4,7 @@ logs/
 *.cpu
 *.mem
 *.test
+testServer/
 
 # bin
 *.exe
