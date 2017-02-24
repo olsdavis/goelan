@@ -34,19 +34,29 @@ type Response struct {
 	data *bytes.Buffer
 }
 
+// Creates a new response.
 func NewResponse() *Response {
 	return &Response{new(bytes.Buffer)}
 }
 
+// Writes a Chat JSON Object.
 func (r *Response) WriteChat(obj string) *Response {
 	return r.WriteJSON(Chat{obj})
 }
 
+// Writes the given object as a JSON string.
 func (r *Response) WriteJSON(obj interface{}) *Response {
 	json, _ := json.Marshal(obj)
 	return r.WriteByteArray(json)
 }
 
+// Writes the given byte.
+func (r *Response) WriteByte(b byte) *Response {
+	r.data.Write([]byte{b})
+	return r
+}
+
+// Writes a varint.
 func (r *Response) WriteVarint(i uint32) *Response {
 	_, err := r.data.Write(Uvarint(i))
 	if err != nil {
@@ -55,21 +65,25 @@ func (r *Response) WriteVarint(i uint32) *Response {
 	return r
 }
 
+// Writes a long.
 func (r *Response) WriteLong(l int64) *Response {
 	binary.Write(r.data, binary.BigEndian, l)
 	return r
 }
 
+// Writes a byte array.
 func (r *Response) WriteByteArray(b []byte) *Response {
 	r.WriteVarint(uint32(len(b)))
 	r.data.Write(b)
 	return r
 }
 
+// Writes a string.
 func (r *Response) WriteString(str string) *Response {
 	return r.WriteByteArray([]byte(str))
 }
 
+// Returns the raw packet created from the written bytes and the provided id.
 func (r *Response) ToRawPacket(id uint64) *RawPacket {
 	return NewRawPacket(id, r.data.Bytes(), nil)
 }

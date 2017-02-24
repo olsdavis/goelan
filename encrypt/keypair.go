@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
-	math "math/rand"
 )
 
 // Generates an 1024 bits RSA keypair.
@@ -33,6 +32,6 @@ func GeneratePublicKey(key *rsa.PrivateKey) []byte {
 // Generates a verify token used for players' authentication.
 func GenerateVerifyToken() []byte {
 	buf := make([]byte, 4)
-	math.Read(buf)
+	rand.Read(buf)
 	return buf
 }

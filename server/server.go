@@ -1,10 +1,10 @@
 package server
 
 import (
-	"../command"
 	"../encrypt"
 	"../log"
 	"../player"
+	"../protocol"
 	"../util"
 	. "crypto/rsa"
 	"encoding/base64"
@@ -17,6 +17,15 @@ import (
 	"sync"
 	"time"
 )
+
+var (
+	serverInstance *Server
+)
+
+// Returns the server's single instance
+func Get() *Server {
+	return serverInstance
+}
 
 const (
 	propertiesFile = "server.properties"
@@ -38,9 +47,8 @@ type Server struct {
 	initialized bool             // true, if the server has been initialized
 	properties  ServerProperties // server's properties
 
-	clients        map[string]Connection // online players
-	playerLock     sync.Mutex            // lock for the clients map
-	CommandManager *command.CommandManager
+	clients    map[string]Connection // online players
+	playerLock sync.Mutex            // lock for the clients map
 
 	serverVersion ServerVersion // server's version (protocol and name)
 	favicon       string        // the favicon
@@ -53,13 +61,15 @@ type Server struct {
 
 // Creates a new server.
 func CreateServer(properties ServerProperties) *Server {
-	return &Server{
+	if serverInstance != nil {
+		panic("already created a server")
+	}
+	serverInstance = &Server{
 		true,
 		false,
 		properties,
 		make(map[string]Connection),
 		sync.Mutex{},
-		command.NewManager(),
 		ServerVersion{"1.11.2", 316},
 		"",
 		nil,
@@ -67,6 +77,7 @@ func CreateServer(properties ServerProperties) *Server {
 		nil,
 		make(chan int, 1),
 	}
+	return serverInstance
 }
 
 // Creates a new server from the properties file.
@@ -210,6 +221,8 @@ func (s *Server) load() {
 func (s *Server) Stop() {
 	s.run = false
 	s.ticker.Stop()
+
+	close(s.ExitChan)
 }
 
 // Handles a new connection.
@@ -235,7 +248,14 @@ func (s *Server) handleConnection(conn net.Conn) {
 	c.Disconnect("")
 	// if the last connection state was the play state, we want to log his disconnection
 	if c.ConnectionState == PlayState {
+		s.playerLock.Lock()
+		delete(s.clients, c.Player.UUID)
+		s.playerLock.Unlock()
+
 		// broadcast
+		message := fmt.Sprintf("%v has left the server.", c.Player.Name)
+		s.BroadcastMessage(message, protocol.DefaultMessageMode)
+		log.Info(message)
 	}
 }
 
@@ -257,8 +277,17 @@ func (s *Server) CanConnect(username, uuid string) (bool, string) {
 }
 
 // Creates the player from the given connection, adds the player to the clients' map, etc.
-func (s *Server) FinishLogin(connection *Connection) {
-
+func (s *Server) FinishLogin(profile player.PlayerProfile, connection *Connection) {
+	// TODO: Load permissions
+	player := player.Player{profile.Name, profile.UUID, make(map[string]bool), profile}
+	connection.Player = &player
+	s.playerLock.Lock()
+	s.clients[player.UUID] = *connection
+	s.playerLock.Unlock()
+	// (there is stuff to do before)
+	//message := fmt.Sprintf("%v has joined the server.", profile.Name)
+	//log.Info(message)
+	//s.BroadcastMessage(message, protocol.DefaultMessageMode)
 }
 
 // Returns the online players count.
@@ -292,4 +321,37 @@ func (s *Server) GetPlayerByUUID(uuid string) (bool, *player.Player) {
 	} else {
 		return ok, nil
 	}
+}
+
+// Executes the given function to all the online players.
+func (s *Server) ApplyToAll(action func(Connection)) {
+	defer s.playerLock.Unlock()
+	s.playerLock.Lock()
+	wg := sync.WaitGroup{}
+	for _, client := range s.clients {
+		wg.Add(1)
+		go func() {
+			action(client)
+			wg.Done()
+		}()
+	}
+	wg.Wait()
+}
+
+// Broadcasts the given packet to all the online players.
+func (s *Server) BroadcastPacket(packet *protocol.RawPacket) {
+	s.ApplyToAll(func(c Connection) {
+		c.Write(packet)
+	})
+}
+
+// Broadcasts the given message to all the players.
+// Message's mode depends on what you want to send:
+// - ChatMessageMode (mode 0): used for players only;
+// - DefaultMessageMode (mode 1): what you should use (system messages);
+// - ActionBarMode (mode 2): if you want to send messages above the hotbar, use this mode.
+func (s *Server) BroadcastMessage(message string, mode protocol.MessageMode) {
+	s.ApplyToAll(func(c Connection) {
+		c.SendMessage(message, mode)
+	})
 }

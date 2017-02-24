@@ -91,6 +91,9 @@ func (r *RawPacket) ReadString() string {
 }
 
 func (r *RawPacket) Release() {
+	if r.Data == nil {
+		panic("data is nil!")
+	}
 	r.Data.Reset()
 	readerPool.Put(r.Data)
 }
@@ -108,11 +111,24 @@ const (
 	EncryptionResponsePacketId   = 0x01
 	EncryptionRequestPacketId    = 0x01
 	// Play state
+	ChatPacketId       = 0x10
 	KickPlayerPacketId = 0x1A
 
 	/*** PACKET CONSTS ***/
 	HandshakeStatusNextState = 1
 	HandshakeLoginNextState  = 2
+)
+
+// Chat
+type MessageMode int
+
+const (
+	// chat message (only for players)
+	ChatMessageMode MessageMode = iota
+	// system message (what you should use)
+	DefaultMessageMode
+	// action bar message
+	ActionBarMode
 )
 
 /*** Util ***/

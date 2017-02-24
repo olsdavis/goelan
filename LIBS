@@ -1,3 +1,5 @@
 go get github.com/BurntSushi/toml
 go get -v github.com/gosuri/uitable
 go get github.com/ojrac/opensimplex-go
+go get github.com/deckarep/golang-set
+go get github.com/pzsz/voronoi

@@ -5,9 +5,7 @@ import (
 	"regexp"
 )
 
-var (
-	usernameRegex = regexp.MustCompile("^[a-zA-Z0-9_]{1,16}$")
-)
+var usernameRegex = regexp.MustCompile("^[a-zA-Z0-9_]{1,16}$")
 
 // Returns the uuid with the hyphens.
 func ToHypenUUID(uuid string) string {

@@ -2,6 +2,7 @@ package auth
 
 import (
 	"../log"
+	. "../player"
 	"crypto/sha1"
 	"encoding/json"
 	"fmt"
@@ -13,18 +14,6 @@ import (
 const (
 	BASE_URL = "https://sessionserver.mojang.com/session/minecraft/hasJoined?username=%v&serverId=%v"
 )
-
-type PlayerProfile struct {
-	UUID       string     `json:"id"`
-	Name       string     `json:"name"`
-	properties []Property `json:"properties"`
-}
-
-type Property struct {
-	Name      string `json:"name"`
-	Value     string `json:"value"`
-	Signature string `json:"signature"`
-}
 
 // Authenticates the current player.
 func Auth(username string, sharedSecret, publicKey []byte) (*PlayerProfile, error) {

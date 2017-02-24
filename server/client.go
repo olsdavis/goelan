@@ -51,7 +51,7 @@ type Connection struct {
 	server          *Server
 	Writer          io.WriteCloser
 	Reader          FullReader
-	writeChan       chan protocol.RawPacket
+	writeChan       chan *protocol.RawPacket
 	exitChan        chan int
 	PacketHandler   stateHandler // the handler which depends on player's state
 	ProtocolVersion uint32
@@ -73,14 +73,14 @@ func NewConnection(socket net.Conn, server *Server) *Connection {
 		server:          server,
 		Writer:          socket,
 		Reader:          NewFullReader(socket),
-		writeChan:       make(chan protocol.RawPacket),
+		writeChan:       make(chan *protocol.RawPacket),
 		exitChan:        make(chan int, 1),
 		ConnectionState: HandshakeState,
 		VerifyToken:     EmtpyArray,
 		VerifyUsername:  "",
 		Player:          nil,
 		connected:       true,
-		sync.Mutex{},
+		Mutex:           sync.Mutex{},
 	}
 }
 
@@ -125,7 +125,7 @@ func (c *Connection) Write(packet *protocol.RawPacket) {
 		log.Debug(file, "at line", line, "tried to send a nil packet.")
 		return
 	}
-	c.writeChan <- *packet
+	c.writeChan <- packet
 }
 
 // Receives packets from the writeChan and sends them to client.
@@ -138,6 +138,10 @@ func (c *Connection) write() {
 		case packet := <-c.writeChan:
 			if c.exitChan == nil {
 				break
+			}
+
+			if packet == nil {
+				continue
 			}
 
 			_, err := c.Writer.Write(toByteArray(packet))
@@ -155,7 +159,7 @@ func (c *Connection) write() {
 }
 
 // Creates a byte array from the given raw packet. Releases the packet at the end.
-func toByteArray(packet protocol.RawPacket) []byte {
+func toByteArray(packet *protocol.RawPacket) []byte {
 	defer packet.Release()
 	send := new(bytes.Buffer)
 	send.Write(protocol.Uvarint(uint32(packet.ID)))
@@ -177,9 +181,21 @@ func (c *Connection) IsConnected() bool {
 
 // Sets the connected field's value.
 func (c *Connection) SetConnected(b bool) {
-	defer c.Unlock()
 	c.Lock()
 	c.connected = b
+	c.Unlock()
+}
+
+// Sends the given message with the given mode.
+// Message's mode depends on what you want to send:
+// - ChatMessageMode (mode 0): used for players only;
+// - DefaultMessageMode (mode 1): what you should use (system messages);
+// - ActionBarMode (mode 2): if you want to send messages above the hotbar, use this mode.
+func (c *Connection) SendMessage(message string, mode protocol.MessageMode) {
+	response := protocol.NewResponse()
+	response.WriteChat(message)
+	response.WriteByte(byte(mode))
+	c.Write(response.ToRawPacket(protocol.ChatPacketId))
 }
 
 // Disconnects the current client for the given reason. (May be empty.)
@@ -199,7 +215,7 @@ func (c *Connection) Disconnect(reason string) {
 		}
 
 		response := protocol.NewResponse()
-		response.WriteJSON(protocol.Chat{reason})
+		response.WriteChat(reason)
 		rp := response.ToRawPacket(packetId)
 		// waits the packet to be send; it prevents us from writing messages
 		// while the socket is being closed

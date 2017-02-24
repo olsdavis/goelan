@@ -3,19 +3,20 @@ package log
 /*
 
 Because nobody has been able to develop a proper library for logging in Go up until
-the moment I am writing this comment (20:21 02/21/2017), I had to write the following
-code, which is quite awful - it's true; although, it works.
+the moment I was writing this comment (20:21 02/21/2017), I had to write the following
+code, which is quite awful - it's true; it works though.
 Maybe one day I will make one; I will keep you up to date.
 
 */
 
 import (
-	"../util"
 	"fmt"
 	"io"
 	"log"
 	"os"
 	"time"
+
+	"../util"
 )
 
 var (
@@ -46,7 +47,7 @@ func Init() {
 	file, err := os.OpenFile(logFileName, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 
 	if err != nil {
-		fmt.Println(os.Stderr, "Could not create log file:", err)
+		fmt.Fprintln(os.Stderr, "Could not create log file:", err)
 	}
 
 	writer := io.MultiWriter(file, os.Stdout)
@@ -59,22 +60,27 @@ func Init() {
 	initialized = true
 }
 
+// Debug prints a debug message to the debugging logger.
 func Debug(message ...interface{}) {
 	DebugLogger.Println(message)
 }
 
+// Info prints an info message to the info logger.
 func Info(message ...interface{}) {
 	InfoLogger.Println(message)
 }
 
+// Warn prints a warning message to the warning logger.
 func Warn(message ...interface{}) {
 	WarnLogger.Println(message)
 }
 
+// Error prints an error message to the error logger.
 func Error(message ...interface{}) {
 	ErrorLogger.Println(message)
 }
 
+// Fatal prints a fatal message to the fatal logger.
 func Fatal(message ...interface{}) {
 	FatalLogger.Println(message)
 }

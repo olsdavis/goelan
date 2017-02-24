@@ -1,10 +1,23 @@
 package player
 
+type PlayerProfile struct {
+	UUID       string     `json:"id"`
+	Name       string     `json:"name"`
+	properties []Property `json:"properties"`
+}
+
+type Property struct {
+	Name      string `json:"name"`
+	Value     string `json:"value"`
+	Signature string `json:"signature"`
+}
+
 type Player struct {
 	Name string
 	UUID string
 	// key => the permission; value => true if the player has the permission
 	Permissions map[string]bool
+	Profile     PlayerProfile
 }
 
 // Returns true if the player has the given permission.

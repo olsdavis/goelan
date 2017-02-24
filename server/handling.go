@@ -217,6 +217,7 @@ func encryptionResponseHandler(packet *RawPacket, sender *Connection) {
 
 	sender.ConnectionState = PlayState
 	AssignHandler(sender)
+	sender.GetServer().FinishLogin(*profile, sender)
 }
 
 /*** PLAY HANDLERS ***/

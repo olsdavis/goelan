@@ -43,9 +43,8 @@ type Command interface {
 	// Called when the command has to be executed.
 	// Label is the label used by the sender,
 	// arguments are the strings following the command (command <args>),
-	// sender is the sender,
-	// manager is the CommandManager which called this method.
-	Execute(label string, arguments []string, sender CommandSender, manager *CommandManager)
+	// sender is the sender.
+	Execute(label string, arguments []string, sender CommandSender)
 }
 
 type CommandSender interface {
