@@ -1,6 +1,10 @@
 package world
 
-type World interface {
-	Name() string
-	Equals(other World) bool
+type World struct {
+	ChunkManager ChunkManager
+	Seed         int
+}
+
+func (w *World) GetBlock(x, y, z int) *Block {
+	return nil
 }

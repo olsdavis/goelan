@@ -29,34 +29,35 @@ func Get() *Server {
 
 const (
 	propertiesFile = "server.properties"
-	faviconFile    = "server-icon.png"
+	faviconFile = "server-icon.png"
 )
 
 // Server's properties, read from the properties file ("server.properties").
 type ServerProperties struct {
-	Port       uint16 // server's port
-	Address    string // server's address
-	Motd       string // server's motd (the description in the server list)
-	MaxPlayers int32  `toml:"max-players"` // the maximal amount of players that the server should host
-	OnlineMode bool   `toml:"online-mode"` // if true => authentication with Mojang servers
+	Port         uint16                      // server's port
+	Address      string                      // server's address
+	Motd         string                      // server's motd (the description in the server list)
+	MaxPlayers   int32  `toml:"max-players"` // the maximal amount of players that the server should host
+	OnlineMode   bool   `toml:"online-mode"` // if true => authentication with Mojang servers
+	ViewDistance int    `toml:"view-distance"`
 }
 
 // Represents a Minecraft server.
 type Server struct {
-	run         bool
-	initialized bool             // true, if the server has been initialized
-	properties  ServerProperties // server's properties
+	run           bool
+	initialized   bool                  // true, if the server has been initialized
+	properties    ServerProperties      // server's properties
 
-	clients    map[string]Connection // online players
-	playerLock sync.Mutex            // lock for the clients map
+	clients       map[string]Connection // online players
+	playerLock    sync.Mutex            // lock for the clients map
 
-	serverVersion ServerVersion // server's version (protocol and name)
-	favicon       string        // the favicon
-	ticker        *time.Ticker  // the ticker for the ticking :)
-	rsaKeypair    *PrivateKey   // the keypair used for encryption
-	publicKey     []byte        // the public key in bytes
+	serverVersion ServerVersion         // server's version (protocol and name)
+	favicon       string                // the favicon
+	ticker        *time.Ticker          // the ticker for the ticking :)
+	rsaKeypair    *PrivateKey           // the keypair used for encryption
+	publicKey     []byte                // the public key in bytes
 
-	ExitChan chan int // a channel used for server's close
+	ExitChan      chan int              // a channel used for server's close
 }
 
 // Creates a new server.
@@ -279,10 +280,15 @@ func (s *Server) CanConnect(username, uuid string) (bool, string) {
 // Creates the player from the given connection, adds the player to the clients' map, etc.
 func (s *Server) FinishLogin(profile player.PlayerProfile, connection *Connection) {
 	// TODO: Load permissions
-	player := player.Player{profile.Name, profile.UUID, make(map[string]bool), profile}
-	connection.Player = &player
+	pl := player.Player{
+		Name: profile.Name,
+		UUID: profile.UUID,
+		Permissions: make(map[string]bool),
+		Profile: profile,
+	}
+	connection.Player = &pl
 	s.playerLock.Lock()
-	s.clients[player.UUID] = *connection
+	s.clients[pl.UUID] = *connection
 	s.playerLock.Unlock()
 	// (there is stuff to do before)
 	//message := fmt.Sprintf("%v has joined the server.", profile.Name)

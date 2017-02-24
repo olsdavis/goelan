@@ -22,3 +22,18 @@ func SquareInt(x int) int {
 func SquareFloat32(x float32) float32 {
 	return x * x
 }
+
+// ClosestMultiple returns the closest multiple of the given number n.
+// Example:
+// ClosestMultiple(15, 16) returns 16
+func ClosestMultiple(n, multiple int) int {
+	if multiple == 0 {
+		return 0
+	}
+
+	if n >= 0 {
+		return n / multiple  * multiple
+	}
+
+	return ((n - multiple + 1) / multiple) * multiple
+}
