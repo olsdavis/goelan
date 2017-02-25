@@ -41,12 +41,12 @@ func NewFullLocation(yaw, pitch, x, y, z float32, world *World) *Location {
 // Creates a SimpleLocation with the given (x,y,z) coordinates and the world.
 // In contrast with the Location type, the SimpleLocation has not got an orientation.
 // Panics if the world is nil.
-func NewSimpleLocation(x, y, z float32, world *World) *SimpleLocation {
+func NewSimpleLocation(x, y, z float32, world *World) SimpleLocation {
 	if world == nil {
 		panic("world cannot be nil")
 	}
 
-	return &SimpleLocation{x, y, z, world}
+	return SimpleLocation{x, y, z, world}
 }
 
 // Calculates the squared distance between the two locations.

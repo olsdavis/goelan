@@ -5,8 +5,8 @@ import (
 )
 
 var (
-	firstLocation  *Location = &Location{Orientation{0, 0}, 32, 53, 0, nil}
-	secondLocation *Location = &Location{Orientation{0, 0}, 32, 53, 0, nil}
+	firstLocation  *Location = &Location{Orientation{0, 0}, SimpleLocation{128, 53, 0, nil}}
+	secondLocation *Location = &Location{Orientation{0, 0}, SimpleLocation{2302, 57, -64, nil}}
 )
 
 func BenchmarkSquaredDistance(b *testing.B) {

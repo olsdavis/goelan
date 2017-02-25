@@ -1,10 +1,20 @@
 package world
 
+type WorldType int
+
+const (
+	Overworld WorldType = iota
+	Nether
+	TheEnd
+)
+
 type World struct {
-	ChunkManager ChunkManager
-	Seed         int
+	ChunkManager   ChunkManager
+	Seed           int64
+	MaxBuildHeight int64
+	Type           WorldType
 }
 
-func (w *World) GetBlock(x, y, z int) *Block {
+func (w *World) GetBlockAt(location SimpleLocation) *Block {
 	return nil
 }

@@ -3,8 +3,9 @@ package world
 import "../material"
 
 type Block struct {
-	location SimpleLocation
-	material material.Material
+	location   SimpleLocation
+	material   material.Material
+	BlockState byte
 }
 
 func (b *Block) GetLocation() SimpleLocation {
