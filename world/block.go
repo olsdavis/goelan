@@ -1,6 +1,9 @@
 package world
 
-import "../material"
+import (
+	"../material"
+	"bytes"
+)
 
 type Block struct {
 	location   SimpleLocation
@@ -14,4 +17,8 @@ func (b *Block) GetLocation() SimpleLocation {
 
 func (b *Block) GetMaterial() material.Material {
 	return b.material
+}
+
+func (b *Block) writeBlock(buffer *bytes.Buffer) {
+
 }

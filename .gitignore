@@ -5,6 +5,7 @@ logs/
 *.mem
 *.test
 testServer/
+server.properties
 
 # bin
 *.exe

@@ -82,6 +82,7 @@ func CallHandler(packet *RawPacket, sender *Connection) {
 
 // Handles the handshake
 func handshakeHandler(packet *RawPacket, sender *Connection) {
+	log.Debug("J'te sers la main fraté.")
 	sender.ProtocolVersion = packet.ReadUnsignedVarint()
 	// omit the following data, we don't need it
 	packet.ReadString()
@@ -96,10 +97,11 @@ func handshakeHandler(packet *RawPacket, sender *Connection) {
 		response := NewResponse()
 		version := sender.GetServer().GetServerVersion()
 		list := ServerListPing{
-			Version{version.Name, version.ProtocolVersion},
-			Players{sender.GetServer().GetMaxPlayers(),
-				sender.GetServer().GetOnlinePlayersCount()}, Chat{sender.GetServer().GetMotd()},
-			"",
+			Ver: Version{Name: version.Name, Protocol: version.ProtocolVersion},
+			Pl: Players{Max: sender.GetServer().GetMaxPlayers(),
+				Online: sender.GetServer().GetOnlinePlayersCount()},
+			Desc: Chat{Text: sender.GetServer().GetMotd()},
+			Fav: "",
 		}
 		if sender.GetServer().HasFavicon() {
 			list.Fav = sender.GetServer().GetFavicon()
@@ -130,6 +132,7 @@ func pingPongHandler(packet *RawPacket, sender *Connection) {
 
 // Handles the login start packet.
 func loginStartHandler(packet *RawPacket, sender *Connection) {
+	log.Debug("Tu veux te connecter fraté ?")
 	username := packet.ReadString()
 	response := NewResponse()
 
@@ -159,6 +162,7 @@ func loginStartHandler(packet *RawPacket, sender *Connection) {
 
 // Handles the encryption request packet.
 func encryptionResponseHandler(packet *RawPacket, sender *Connection) {
+	log.Debug("J'vais t'encrypter fraté.")
 	sharedSecret, err := rsa.DecryptPKCS1v15(rand.Reader, sender.GetServer().GetPrivateKey(), packet.ReadByteArray())
 	if err != nil {
 		panic(err)
@@ -201,9 +205,12 @@ func encryptionResponseHandler(packet *RawPacket, sender *Connection) {
 	}
 
 	response := NewResponse()
+	log.Debug(util.ToHypenUUID(profile.UUID))
+	log.Debug(profile.Name)
 	response.WriteString(util.ToHypenUUID(profile.UUID))
 	response.WriteString(profile.Name)
 	sender.Write(response.ToRawPacket(LoginSuccessPacketId))
+	log.Debug("Tu peux venir frère !")
 
 	sender.SharedSecret = sharedSecret
 	// release the data we don't need anymore
@@ -218,6 +225,15 @@ func encryptionResponseHandler(packet *RawPacket, sender *Connection) {
 	sender.ConnectionState = PlayState
 	AssignHandler(sender)
 	sender.GetServer().FinishLogin(*profile, sender)
+	response.Clear()
+	response.WriteInt(0). // entity id
+		WriteUnsignedByte(1). // gamemode
+		WriteInt(0). // dimension
+		WriteUnsignedByte(0). // difficulty
+		WriteUnsignedByte(0). // max players (ignored)
+		WriteString("default"). // level type
+		WriteBoolean(false) // reduced debug info
+	sender.Write(response.ToRawPacket(JoinGamePacketId))
 }
 
 /*** PLAY HANDLERS ***/

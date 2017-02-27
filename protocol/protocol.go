@@ -10,12 +10,12 @@ import (
 )
 
 var (
-	ByteOrder  = binary.BigEndian
+	ByteOrder = binary.BigEndian
 	emptyArray []byte
 	// ByteReader
 
 	ReadAllError = errors.New("reached the end of this reader's buffer")
-	readerPool   = sync.Pool{New: func() interface{} {
+	readerPool = sync.Pool{New: func() interface{} {
 		return &ByteReader{
 			emptyArray,
 			0,
@@ -103,20 +103,23 @@ const (
 
 	// Handshake state
 	HandshakePacketId = 0x00
-	PingPacketId      = 0x01
+	PingPacketId = 0x01
 	// Login state
-	LoginStartPacketId           = 0x00
+	LoginStartPacketId = 0x00
 	LoginStateDisconnectPacketId = 0x00
-	LoginSuccessPacketId         = 0x02
-	EncryptionResponsePacketId   = 0x01
-	EncryptionRequestPacketId    = 0x01
+	LoginSuccessPacketId = 0x02
+	EncryptionResponsePacketId = 0x01
+	EncryptionRequestPacketId = 0x01
 	// Play state
-	ChatPacketId       = 0x10
+	ChatPacketId = 0x10
 	KickPlayerPacketId = 0x1A
+	KeepAlivePacketId = 0x1F
+	ChunkDataPacketId = 0x20
+	JoinGamePacketId = 0x23
 
 	/*** PACKET CONSTS ***/
 	HandshakeStatusNextState = 1
-	HandshakeLoginNextState  = 2
+	HandshakeLoginNextState = 2
 )
 
 // Chat

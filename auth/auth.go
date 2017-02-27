@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"../log"
 	. "../player"
 	"crypto/sha1"
 	"encoding/json"
@@ -30,7 +29,6 @@ func Auth(username string, sharedSecret, publicKey []byte) (*PlayerProfile, erro
 	var profile PlayerProfile
 	err = json.Unmarshal(content, &profile)
 	if err != nil {
-		log.Debug(string(content))
 		return nil, err
 	}
 	return &profile, nil

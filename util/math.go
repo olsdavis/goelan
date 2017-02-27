@@ -18,14 +18,14 @@ func SquareInt(x int) int {
 	return x * x
 }
 
-// Returns the square of the given float (32)
+// Returns the square of the given float (32).
 func SquareFloat32(x float32) float32 {
 	return x * x
 }
 
 // ClosestMultiple returns the closest multiple of the given number n.
 // Example:
-// ClosestMultiple(15, 16) returns 16
+// ClosestMultiple(18, 16) returns 16
 func ClosestMultiple(n, multiple int) int {
 	if multiple == 0 {
 		return 0
@@ -36,4 +36,8 @@ func ClosestMultiple(n, multiple int) int {
 	}
 
 	return ((n - multiple + 1) / multiple) * multiple
+}
+
+func ToRange(limitMax, limitMin, baseMax, baseMin, v float32) float32 {
+	return ((limitMax - limitMin) * (v - baseMin) / (baseMax - baseMin)) + limitMin
 }

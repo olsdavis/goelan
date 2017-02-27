@@ -11,7 +11,7 @@ const (
 type World struct {
 	ChunkManager   ChunkManager
 	Seed           int64
-	MaxBuildHeight int64
+	MaxBuildHeight uint16
 	Type           WorldType
 }
 

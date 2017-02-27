@@ -142,6 +142,12 @@ func (c *Connection) write() {
 
 			if packet == nil {
 				continue
+			} else {
+				if packet.ID == protocol.JoinGamePacketId {
+					log.Debug(packet.Data)
+					log.Debug(packet.ReadString())
+					log.Debug(packet.ReadString())
+				}
 			}
 
 			_, err := c.Writer.Write(toByteArray(packet))

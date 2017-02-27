@@ -5,6 +5,8 @@ import (
 	opensimplex "github.com/ojrac/opensimplex-go"
 	"math"
 	"fmt"
+	"../protocol"
+	"bytes"
 )
 
 const (
@@ -42,6 +44,20 @@ func (chunk *Chunk) doSetBlock(x, y, z int8, block *Block) {
 		yMap[y] = zMap
 	}
 	zMap[z] = block
+}
+
+func (chunk *Chunk) writeChunk(buffer *bytes.Buffer) {
+	for x, yMap := range chunk.blocks {
+		if yMap == nil {
+			continue
+		}
+
+		for y, zMap := range yMap {
+			for z, block := range zMap {
+				block.writeBlock(buffer)
+			}
+		}
+	}
 }
 
 type ChunkManager struct {
@@ -138,6 +154,23 @@ func (manager *ChunkManager) smoothNoiseAt(x, z int) int {
 
 func (manager *ChunkManager) noiseAt(x, z int) int {
 	return int(math.Abs(manager.simplex.Eval2(float64(x), float64(z)) * 132))
+}
+
+func (manager *ChunkManager) writeChunkColumn(chunks []*Chunk) *protocol.RawPacket {
+	response := protocol.NewResponse()
+	response.WriteInt(chunks[0].X).WriteInt(chunks[0].Y)
+	response.WriteBoolean(true)
+	maskPosition := 1
+	var bitmask int = 0
+	buffer := &new(bytes.Buffer)
+	for _, chunk := range chunks {
+		if chunk != nil {
+			chunk.writeChunk(buffer)
+			bitmask |= maskPosition
+		}
+		maskPosition <<= 1
+	}
+	return response.ToRawPacket(protocol.ChunkDataPacketId)
 }
 
 // Converts the given location to chunk coordinates.
