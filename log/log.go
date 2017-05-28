@@ -51,10 +51,10 @@ func Init() {
 	}
 
 	writer := io.MultiWriter(file, os.Stdout)
-	DebugLogger = log.New(os.Stdout, "[DEBU] ", log.Ltime|log.Lshortfile)
+	DebugLogger = log.New(os.Stdout, "[DEBU] ", log.Ltime)
 	InfoLogger = log.New(writer, "[INFO] ", log.Ltime)
 	WarnLogger = log.New(writer, "[WARN] ", log.Ltime)
-	ErrorLogger = log.New(writer, "[ERRO] ", log.Ltime|log.Llongfile)
+	ErrorLogger = log.New(writer, "[ERRO] ", log.Ltime)
 	FatalLogger = log.New(writer, "[FATA] ", log.Ltime)
 
 	initialized = true
