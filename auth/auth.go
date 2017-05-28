@@ -1,10 +1,10 @@
 package auth
 
 import (
-	. "../player"
 	"crypto/sha1"
 	"encoding/json"
 	"fmt"
+	. "github.com/olsdavis/goelan/player"
 	"io/ioutil"
 	"net/http"
 	"strings"

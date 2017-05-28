@@ -3,10 +3,10 @@ package protocol
 //TODO: Handle errors
 
 import (
-	"../log"
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
+	"github.com/olsdavis/goelan/log"
 )
 
 // Represents server list ping response.

@@ -1,9 +1,9 @@
 package main
 
 import (
-	"./command"
-	"./log"
-	"./server"
+	"github.com/olsdavis/goelan/command"
+	"github.com/olsdavis/goelan/log"
+	"github.com/olsdavis/goelan/server"
 	"os"
 )
 

@@ -1,12 +1,12 @@
 package server
 
 import (
-	"../log"
-	"../player"
-	"../protocol"
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"github.com/olsdavis/goelan/log"
+	"github.com/olsdavis/goelan/player"
+	"github.com/olsdavis/goelan/protocol"
 	"io"
 	"net"
 	"sync"

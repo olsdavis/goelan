@@ -1,11 +1,11 @@
 package protocol
 
 import (
-	"../log"
-	"../util"
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"github.com/olsdavis/goelan/log"
+	"github.com/olsdavis/goelan/util"
 	"sync"
 )
 

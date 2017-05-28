@@ -1,8 +1,8 @@
 package world
 
 import (
-	"../material"
 	"bytes"
+	"github.com/olsdavis/goelan/material"
 )
 
 type Block struct {

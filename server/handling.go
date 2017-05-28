@@ -1,17 +1,17 @@
 package server
 
 import (
-	"../auth"
-	"../encrypt"
-	"../log"
-	. "../protocol"
-	"../util"
 	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
 	"crypto/rsa"
 	"fmt"
+	"github.com/olsdavis/goelan/auth"
+	"github.com/olsdavis/goelan/encrypt"
+	"github.com/olsdavis/goelan/log"
+	. "github.com/olsdavis/goelan/protocol"
+	"github.com/olsdavis/goelan/util"
 )
 
 type PacketHandler func(packet *RawPacket, sender *Connection)

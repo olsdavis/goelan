@@ -16,7 +16,7 @@ import (
 	"os"
 	"time"
 
-	"../util"
+	"github.com/olsdavis/goelan/util"
 )
 
 var (

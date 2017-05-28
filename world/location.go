@@ -1,7 +1,7 @@
 package world
 
 import (
-	"../util"
+	"github.com/olsdavis/goelan/util"
 	"math"
 )
 

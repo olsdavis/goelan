@@ -1,8 +1,8 @@
 package command
 
 import (
-	"../permission"
 	"github.com/gosuri/uitable"
+	"github.com/olsdavis/goelan/permission"
 	"strings"
 )
 

@@ -1,8 +1,8 @@
 package command
 
 import (
-	"../permission"
-	"../server"
+	"github.com/olsdavis/goelan/permission"
+	"github.com/olsdavis/goelan/server"
 )
 
 type StopCommand struct{}
