@@ -9,7 +9,6 @@ import (
 	"errors"
 	"io"
 	"net"
-	"runtime"
 	"sync"
 )
 
@@ -115,14 +114,6 @@ func (c *Connection) Next() (*protocol.RawPacket, error) {
 // Write sends the given packet to the current connection.
 func (c *Connection) Write(packet *protocol.RawPacket) {
 	if packet == nil {
-		log.Debug("You b****")
-		_, file, line, ok := runtime.Caller(1)
-		if !ok {
-			file = "???"
-			line = 0
-		}
-
-		log.Debug(file, "at line", line, "tried to send a nil packet.")
 		return
 	}
 	c.writeChan <- packet
@@ -144,9 +135,8 @@ func (c *Connection) write() {
 				continue
 			} else {
 				if packet.ID == protocol.JoinGamePacketId {
-					log.Debug(packet.Data)
-					log.Debug(packet.ReadString())
-					log.Debug(packet.ReadString())
+					log.Debug("Very here:", packet.Data)
+					log.Debug(packet.ReadVarint())
 				}
 			}
 

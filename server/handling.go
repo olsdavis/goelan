@@ -101,7 +101,7 @@ func handshakeHandler(packet *RawPacket, sender *Connection) {
 			Pl: Players{Max: sender.GetServer().GetMaxPlayers(),
 				Online: sender.GetServer().GetOnlinePlayersCount()},
 			Desc: Chat{Text: sender.GetServer().GetMotd()},
-			Fav: "",
+			Fav:  "",
 		}
 		if sender.GetServer().HasFavicon() {
 			list.Fav = sender.GetServer().GetFavicon()
@@ -205,8 +205,6 @@ func encryptionResponseHandler(packet *RawPacket, sender *Connection) {
 	}
 
 	response := NewResponse()
-	log.Debug(util.ToHypenUUID(profile.UUID))
-	log.Debug(profile.Name)
 	response.WriteString(util.ToHypenUUID(profile.UUID))
 	response.WriteString(profile.Name)
 	sender.Write(response.ToRawPacket(LoginSuccessPacketId))
@@ -227,12 +225,12 @@ func encryptionResponseHandler(packet *RawPacket, sender *Connection) {
 	sender.GetServer().FinishLogin(*profile, sender)
 	response.Clear()
 	response.WriteInt(0). // entity id
-		WriteUnsignedByte(1). // gamemode
-		WriteInt(0). // dimension
-		WriteUnsignedByte(0). // difficulty
-		WriteUnsignedByte(0). // max players (ignored)
-		WriteString("default"). // level type
-		WriteBoolean(false) // reduced debug info
+				WriteUnsignedByte(1).   // gamemode
+				WriteInt(0).            // dimension
+				WriteUnsignedByte(0).   // difficulty
+				WriteUnsignedByte(0).   // max players (ignored)
+				WriteString("default"). // level type
+				WriteBoolean(false)     // reduced debug info
 	sender.Write(response.ToRawPacket(JoinGamePacketId))
 }
 

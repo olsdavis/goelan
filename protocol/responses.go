@@ -3,10 +3,10 @@ package protocol
 //TODO: Handle errors
 
 import (
+	"../log"
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
-	"../log"
 )
 
 // Represents server list ping response.
@@ -95,7 +95,6 @@ func (r *Response) WriteLong(l int64) *Response {
 
 // Writes a byte array.
 func (r *Response) WriteByteArray(b []byte) *Response {
-	log.Debug("Je vais écrire un byte array fraté: ", string(b))
 	r.WriteVarint(uint32(len(b)))
 	r.data.Write(b)
 	return r
