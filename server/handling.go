@@ -132,7 +132,6 @@ func pingPongHandler(packet *RawPacket, sender *Connection) {
 
 // Handles the login start packet.
 func loginStartHandler(packet *RawPacket, sender *Connection) {
-	log.Debug("Tu veux te connecter fraté ?")
 	username := packet.ReadString()
 	response := NewResponse()
 
@@ -231,6 +230,8 @@ func encryptionResponseHandler(packet *RawPacket, sender *Connection) {
 				WriteUnsignedByte(0).   // max players (ignored)
 				WriteString("default"). // level type
 				WriteBoolean(false)     // reduced debug info
+	// Why does it output to the following array: 1 0 0 7 100 101 102 97 117 108 116 0
+	// the first two ops are skipped, and the third one is + 1
 	sender.Write(response.ToRawPacket(JoinGamePacketId))
 }
 

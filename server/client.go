@@ -136,7 +136,6 @@ func (c *Connection) write() {
 			} else {
 				if packet.ID == protocol.JoinGamePacketId {
 					log.Debug("Very here:", packet.Data)
-					log.Debug(packet.ReadVarint())
 				}
 			}
 

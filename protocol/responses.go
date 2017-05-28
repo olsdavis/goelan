@@ -6,7 +6,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
-	"github.com/olsdavis/goelan/log"
+	"fmt"
 )
 
 // Represents server list ping response.
@@ -37,7 +37,6 @@ type Response struct {
 
 // Creates a new response.
 func NewResponse() *Response {
-	log.Debug("New response!")
 	return &Response{new(bytes.Buffer)}
 }
 
@@ -102,7 +101,6 @@ func (r *Response) WriteByteArray(b []byte) *Response {
 
 // Writes a string.
 func (r *Response) WriteString(str string) *Response {
-	log.Debug("String to write:", str)
 	return r.WriteByteArray([]byte(str))
 }
 
@@ -112,5 +110,5 @@ func (r *Response) ToRawPacket(id uint64) *RawPacket {
 }
 
 func (r *Response) Clear() {
-	r.data.Reset()
+	r.data = new(bytes.Buffer)
 }
