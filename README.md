@@ -1,6 +1,5 @@
-**Goelan**, a Minecraft server written in Go.
+**Goelan**, high performance Minecraft.
 =
-Temporary name.
+Goelan is a Minecraft server written in Go. It is currently under development.
 
-
-> Written with [StackEdit](https://stackedit.io/).
+Some parts of the code are inspired or taken from other never finished open source projects in Go.
