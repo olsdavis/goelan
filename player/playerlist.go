@@ -2,7 +2,9 @@ package player
 
 import (
 	"encoding/json"
+	"github.com/olsdavis/goelan/util"
 	"io/ioutil"
+	"os"
 )
 
 /*
@@ -28,7 +30,7 @@ func NewBanList() *BanList {
 	}
 }
 
-// Loads the list from the given file.
+// LoadFile loads the ban list from the given file.
 func (list *BanList) LoadFile(path string) error {
 	content, err := ioutil.ReadFile(path)
 
@@ -50,22 +52,38 @@ func (list *BanList) LoadFile(path string) error {
 	return nil
 }
 
-// Saves the list to the given file.
+// SaveFile saves the ban list in the given file.
 func (list *BanList) SaveFile(path string) error {
-	return nil
+	content, err := json.Marshal(list)
+	if err != nil {
+		return err
+	}
+	if ok, _ := util.Exists(path); ok {
+		err := os.Remove(path)
+		if err != nil {
+			return err
+		}
+	}
+	file, err := os.Create(path)
+	defer file.Close()
+	if err != nil {
+		return err
+	}
+	_, err = file.Write(content)
+	return err
 }
 
-// Adds the given player to the list.
+// AddPlayer adds the given player to the list.
 func (list *BanList) AddPlayer(uuid, reason string) {
 	list.players[uuid] = reason
 }
 
-// Removes the given player from the list.
+// RemovePlayer removes the given player from the list.
 func (list *BanList) RemovePlayer(uuid string) {
 	delete(list.players, uuid)
 }
 
-// Returns the UUIDs that the list contains. (Can be empty.)
+// GetPlayers returns the UUIDs that the list contains. (The returned array can be empty.)
 func (list *BanList) GetPlayers() []string {
 	ret := make([]string, len(list.players))
 	i := 0
@@ -76,7 +94,7 @@ func (list *BanList) GetPlayers() []string {
 	return ret
 }
 
-// Returns true if the list has the given UUID.
+// HasPlayer returns true if the list has the given UUID.
 func (list *BanList) HasPlayer(uuid string) bool {
 	if _, ok := list.players[uuid]; ok {
 		return true
