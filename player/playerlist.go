@@ -19,7 +19,7 @@ type BanList struct {
 
 type JsonProfile struct {
 	UUID   string `json:"uuid"`
-	Reason string `json:"reason"`
+	Reason string `json:"reason,omitempty"`
 }
 
 func NewBanList() *BanList {
