@@ -226,8 +226,6 @@ func (s *Server) load() {
 		} else {
 			s.favicon = "data:image/png;base64," + base64.StdEncoding.EncodeToString(contents)
 		}
-	} else {
-		log.Debug("No favicon set!")
 	}
 }
 
