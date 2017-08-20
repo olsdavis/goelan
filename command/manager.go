@@ -35,7 +35,7 @@ func CommandExecute(line string, sender CommandSender) {
 		return
 	}
 
-	line = line[:len(line)-2] // removes the new line char
+	line = line[:len(line)-1] // removes the new line char
 	parts := strings.Split(line, " ")
 	label := parts[0]
 	if handler, ok := commands[label]; ok {
