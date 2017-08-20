@@ -34,12 +34,12 @@ type Response struct {
 	data *bytes.Buffer
 }
 
-// Creates a new response.
+// NewResponse creates a new response.
 func NewResponse() *Response {
 	return &Response{data: new(bytes.Buffer)}
 }
 
-// Writes a boolean.
+// WriteBoolean writes the given boolean to the current response.
 func (r *Response) WriteBoolean(b bool) *Response {
 	if b {
 		return r.WriteByte(1)
@@ -48,29 +48,31 @@ func (r *Response) WriteBoolean(b bool) *Response {
 	}
 }
 
-// Writes a Chat JSON Object.
+// WriteChat writes a Chat JSON Object to the current response.
 func (r *Response) WriteChat(obj string) *Response {
 	return r.WriteJSON(Chat{obj})
 }
 
-// Writes the given object as a JSON string.
+// WriteJSON writes the given interface as a JSON string to the current response.
+// (Currently ignores failure.)
 func (r *Response) WriteJSON(obj interface{}) *Response {
 	j, _ := json.Marshal(obj)
 	return r.WriteByteArray(j)
 }
 
-// Writes the given byte.
+// WriteByte writes the given byte to the current response.
 func (r *Response) WriteByte(b byte) *Response {
 	r.data.Write([]byte{b})
 	return r
 }
 
+// WriteUnsignedByte writes the given unsigned byte to the current response.
 func (r *Response) WriteUnsignedByte(b uint8) *Response {
 	binary.Write(r.data, ByteOrder, b)
 	return r
 }
 
-// Writes a varint.
+// WriteVarInt writes the given VarInt to the current response.
 func (r *Response) WriteVarint(i uint32) *Response {
 	_, err := r.data.Write(Uvarint(i))
 	if err != nil {
@@ -79,26 +81,26 @@ func (r *Response) WriteVarint(i uint32) *Response {
 	return r
 }
 
-// Writes an integer.
+// WriteInt writes the given integer to the current response.
 func (r *Response) WriteInt(i int32) *Response {
 	binary.Write(r.data, ByteOrder, i)
 	return r
 }
 
-// Writes a long.
+// WriteLong writes the given long to the current response.
 func (r *Response) WriteLong(l int64) *Response {
 	binary.Write(r.data, ByteOrder, l)
 	return r
 }
 
-// Writes a byte array.
+// WriteByteArray writes the given byte array to the current response.
 func (r *Response) WriteByteArray(b []byte) *Response {
 	r.WriteVarint(uint32(len(b)))
 	r.data.Write(b)
 	return r
 }
 
-// Writes a string.
+// WriteString writes the given string to the current response.
 func (r *Response) WriteString(str string) *Response {
 	return r.WriteByteArray([]byte(str))
 }
@@ -108,6 +110,7 @@ func (r *Response) ToRawPacket(id uint64) *RawPacket {
 	return NewRawPacket(id, r.data.Bytes(), nil)
 }
 
+// Clear clears the data from the response's buffer.
 func (r *Response) Clear() {
 	r.data = new(bytes.Buffer)
 }
