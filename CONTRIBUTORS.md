@@ -7,3 +7,4 @@ If you want to commit any change to this project, your commit must follow these 
 | Refactoring                         | `:recycle:`      |
 | WIP (Work In Progress)              | `:construction:` |
 | Documentation (or text-only commit) | `:memo:`         |
+| Miscellaneous                       | `:hammer:`       |
