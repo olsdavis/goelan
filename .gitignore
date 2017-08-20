@@ -5,6 +5,7 @@ logs/
 *.mem
 *.test
 testServer/
+run/
 server.properties
 
 # bin
