@@ -55,7 +55,9 @@ func init() {
 		},
 	}
 	handlers[PlayState] = stateMapHandler{
-		map[uint64]PacketHandler{},
+		map[uint64]PacketHandler{
+			PluginMessagePacketId: pluginMessageHandler,
+		},
 	}
 }
 
@@ -203,6 +205,7 @@ func encryptionResponseHandler(packet *RawPacket, sender *Connection) {
 		return
 	}
 
+	// Login Success packet
 	response := NewResponse()
 	response.WriteString(util.ToHypenUUID(profile.UUID))
 	response.WriteString(profile.Name)
@@ -218,10 +221,12 @@ func encryptionResponseHandler(packet *RawPacket, sender *Connection) {
 		return
 	}
 
+	// New connection state
 	sender.ConnectionState = PlayState
 	AssignHandler(sender)
 	sender.GetServer().FinishLogin(*profile, sender)
 	response.Clear()
+	// Join Game packet
 	response.WriteInt(0). // entity id
 				WriteUnsignedByte(1).   // gamemode
 				WriteInt(0).            // dimension
@@ -229,9 +234,15 @@ func encryptionResponseHandler(packet *RawPacket, sender *Connection) {
 				WriteUnsignedByte(0).   // max players (ignored)
 				WriteString("default"). // level type
 				WriteBoolean(false)     // reduced debug info
-	// Why does it output to the following array: 1 0 0 7 100 101 102 97 117 108 116 0
-	// the first two ops are skipped, and the third one is + 1
 	sender.Write(response.ToRawPacket(JoinGamePacketId))
+	response.Clear()
 }
 
 /*** PLAY HANDLERS ***/
+
+func pluginMessageHandler(packet *RawPacket, sender *Connection) {
+}
+
+func keepAliveHandler(packet *RawPacket, sender *Connection) {
+
+}

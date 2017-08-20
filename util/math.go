@@ -13,12 +13,12 @@ func Min(x, y int) int {
 	return x
 }
 
-// Returns the square of the given integer.
+// SquareInt returns the square of the given integer.
 func SquareInt(x int) int {
 	return x * x
 }
 
-// Returns the square of the given float (32).
+// SquareFloat32 returns the square of the given float (32).
 func SquareFloat32(x float32) float32 {
 	return x * x
 }

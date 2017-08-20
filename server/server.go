@@ -16,6 +16,7 @@ import (
 	"os"
 	"sync"
 	"time"
+	"math/rand"
 )
 
 var (
@@ -47,16 +48,17 @@ type Server struct {
 	run         bool
 	initialized bool             // true, if the server has been initialized
 	properties  ServerProperties // server's properties
-	
+
 	clients    map[string]Connection // online players
 	playerLock sync.Mutex            // lock for the clients map
-	
+
 	serverVersion ServerVersion   // server's version (protocol and name)
 	favicon       string          // the favicon
 	ticker        *time.Ticker    // the ticker for the ticking :)
+	keepAlive     *time.Ticker    // the ticker for the keep alive packets
 	rsaKeypair    *rsa.PrivateKey // the keypair used for encryption
 	publicKey     []byte          // the public key in bytes
-	
+
 	ExitChan chan int // a channel used for server's close
 }
 
@@ -66,17 +68,18 @@ func CreateServer(properties ServerProperties) *Server {
 		panic("already created a server")
 	}
 	serverInstance = &Server{
-		true,
-		false,
-		properties,
-		make(map[string]Connection),
-		sync.Mutex{},
-		ServerVersion{"1.11.2", 316},
-		"",
-		nil,
-		encrypt.GenerateKeyPair(),
-		nil,
-		make(chan int, 1),
+		run:           true,
+		initialized:   false,
+		properties:    properties,
+		clients:       make(map[string]Connection),
+		playerLock:    sync.Mutex{},
+		serverVersion: ServerVersion{"1.11.2", 316},
+		favicon:       "",
+		ticker:        nil,
+		keepAlive:     nil,
+		rsaKeypair:    encrypt.GenerateKeyPair(),
+		publicKey:     nil,
+		ExitChan:      make(chan int, 1),
 	}
 	return serverInstance
 }
@@ -89,11 +92,11 @@ func CreateServerFromProperties() *Server {
 
 func readProperties() *ServerProperties {
 	var properties ServerProperties
-	
+
 	// properties file read
 	if _, err := os.Open(propertiesFile); err != nil && os.IsNotExist(err) {
 		log.Info(fmt.Sprintf("No %v file found. Creating one.", propertiesFile))
-		
+
 		properties = ServerProperties{
 			Port:         25565,
 			Address:      "127.0.0.1",
@@ -102,21 +105,21 @@ func readProperties() *ServerProperties {
 			OnlineMode:   true,
 			ViewDistance: 15,
 		}
-		
+
 		f, e := os.Create(propertiesFile)
 		if e != nil {
 			log.Fatal(fmt.Sprintf("Could not create the '%v' file! %s", propertiesFile, e))
 		}
-		
+
 		defer f.Close()
 		toml.NewEncoder(f).Encode(properties)
 	}
-	
+
 	if _, err := toml.DecodeFile(propertiesFile, &properties); err != nil {
 		log.Error("Could not load configuration file 'server.properties'!", err)
 		return nil
 	}
-	
+
 	return &properties
 }
 
@@ -179,25 +182,27 @@ func (s *Server) Start() {
 	if s.initialized {
 		return
 	}
-	
+
 	log.Info(fmt.Sprintf("Protocol #%v (Minecraft %v)", s.serverVersion.ProtocolVersion, s.serverVersion.Name))
-	
+
 	// listen
 	listen := fmt.Sprintf("%v:%v", s.properties.Address, s.properties.Port)
 	socket, err := net.Listen("tcp", listen)
-	
+
 	if err != nil {
 		panic(fmt.Sprintf("Could not create socket: %v", err))
 	}
-	
+
 	s.load()
-	
+
 	s.initialized = true
-	
+
 	// 20 ticks per second
 	s.ticker = time.NewTicker(time.Second / 20)
+	s.keepAlive = time.NewTicker(time.Second * 2)
 	go s.tick()
-	
+	go s.sendKeepAlive()
+
 	log.Info("Done start up! Waiting for players to join.")
 	log.Info("Listening on", listen)
 	for s.run {
@@ -211,6 +216,19 @@ func (s *Server) tick() {
 	for s.run {
 		<-s.ticker.C
 		// TODO: Logic
+	}
+}
+
+// sendKeepAlive sends a Keep Alive packet every 15 seconds.
+func (s *Server) sendKeepAlive() {
+	keepAlive := protocol.NewResponse()
+	for s.run {
+		<-s.keepAlive.C
+		id := uint32(rand.Intn(65535) + 1)
+		keepAlive.WriteVarint(id)
+		s.ApplyToAllSync(func(c Connection) {
+			// TODO
+		})
 	}
 }
 
@@ -233,7 +251,7 @@ func (s *Server) load() {
 func (s *Server) Stop() {
 	s.run = false
 	s.ticker.Stop()
-	
+	s.keepAlive.Stop()
 	close(s.ExitChan)
 }
 
@@ -244,14 +262,14 @@ func (s *Server) handleConnection(conn net.Conn) {
 	go c.write()
 	for c.IsConnected() {
 		read, err := c.Next()
-		
+
 		if err != nil {
 			if err != io.EOF {
 				log.Error("Encountered an exception during read:", err)
 			}
 			break
 		}
-		
+
 		if read != nil {
 			c.PacketHandler.callHandler(read, c)
 			read.Release()
@@ -263,7 +281,7 @@ func (s *Server) handleConnection(conn net.Conn) {
 		s.playerLock.Lock()
 		delete(s.clients, c.Player.UUID)
 		s.playerLock.Unlock()
-		
+
 		// broadcast
 		message := fmt.Sprintf("%v has left the server.", c.Player.Name)
 		s.BroadcastMessage(message, protocol.DefaultMessageMode)
@@ -278,13 +296,13 @@ func (s *Server) CanConnect(username, uuid string) (bool, string) {
 	if !util.IsValidUsername(username) {
 		return false, "Your username is invalid."
 	}
-	
+
 	// TODO: check if banned
-	
+
 	if ok, _ := s.GetPlayerByName(username); ok {
 		return false, "You already logged in with this account."
 	}
-	
+
 	return true, ""
 }
 
@@ -301,21 +319,21 @@ func (s *Server) FinishLogin(profile player.PlayerProfile, connection *Connectio
 	s.playerLock.Lock()
 	s.clients[pl.UUID] = *connection
 	s.playerLock.Unlock()
-	// (there is stuff to do before)
-	//message := fmt.Sprintf("%v has joined the server.", profile.Name)
-	//log.Info(message)
-	//s.BroadcastMessage(message, protocol.DefaultMessageMode)
+	// announce login in chat and logs
+	message := fmt.Sprintf("%v has joined the server.", profile.Name)
+	log.Info(message)
+	s.BroadcastMessage(message, protocol.DefaultMessageMode)
 }
 
-// Returns the online players count.
+// GetOnlinePlayersCount returns the online players count.
 func (s *Server) GetOnlinePlayersCount() uint {
 	defer s.playerLock.Unlock()
 	s.playerLock.Lock()
 	return uint(len(s.clients))
 }
 
-// Returns true if the player associated to the given username has been found
-// with the player in himself. Otherwise returns false and the nil player.
+// GetPlayerByName returns true if the player associated to the given username has been found
+// with the player in himself. Otherwise returns false and nil.
 func (s *Server) GetPlayerByName(username string) (bool, *player.Player) {
 	defer s.playerLock.Unlock()
 	s.playerLock.Lock()
@@ -327,8 +345,8 @@ func (s *Server) GetPlayerByName(username string) (bool, *player.Player) {
 	return false, nil
 }
 
-// Returns true if the player associated to the given UUID has been found
-// with the player himself. Otherwise returns false and the nil.
+// GetPlayerByUUID returns true if the player associated to the given UUID has been found
+// with the player himself. Otherwise returns false and nil.
 func (s *Server) GetPlayerByUUID(uuid string) (bool, *player.Player) {
 	defer s.playerLock.Unlock()
 	s.playerLock.Lock()
@@ -340,7 +358,8 @@ func (s *Server) GetPlayerByUUID(uuid string) (bool, *player.Player) {
 	}
 }
 
-// Executes the given function to all the online players.
+// ApplyToAll executes the given action for each online player.
+// This function runs a go routine for each player.
 func (s *Server) ApplyToAll(action func(Connection)) {
 	defer s.playerLock.Unlock()
 	s.playerLock.Lock()
@@ -355,20 +374,29 @@ func (s *Server) ApplyToAll(action func(Connection)) {
 	wg.Wait()
 }
 
-// Broadcasts the given packet to all the online players.
+// ApplyToAllSync executes the given action for each online player.
+func (s *Server) ApplyToAllSync(action func(Connection)) {
+	defer s.playerLock.Unlock()
+	s.playerLock.Lock()
+	for _, client := range s.clients {
+		action(client)
+	}
+}
+
+// Broadcasts the given packet to all the online players (async).
 func (s *Server) BroadcastPacket(packet *protocol.RawPacket) {
 	s.ApplyToAll(func(c Connection) {
 		c.Write(packet)
 	})
 }
 
-// Broadcasts the given message to all the players.
+// Broadcasts the given message to all the players (async).
 // Message's mode depends on what you want to send:
 // - ChatMessageMode (mode 0): used for players only;
 // - DefaultMessageMode (mode 1): what you should use (system messages);
 // - ActionBarMode (mode 2): if you want to send messages above the hotbar, use this mode.
 func (s *Server) BroadcastMessage(message string, mode protocol.MessageMode) {
-	s.ApplyToAll(func(c Connection) {
+	s.ApplyToAllSync(func(c Connection) {
 		c.SendMessage(message, mode)
 	})
 }

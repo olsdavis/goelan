@@ -111,11 +111,12 @@ const (
 	EncryptionResponsePacketId   = 0x01
 	EncryptionRequestPacketId    = 0x01
 	// Play state
-	ChatPacketId       = 0x10
-	KickPlayerPacketId = 0x1A
-	KeepAlivePacketId  = 0x1F
-	ChunkDataPacketId  = 0x20
-	JoinGamePacketId   = 0x23
+	ChatPacketId          = 0x10
+	KickPlayerPacketId    = 0x1A
+	KeepAlivePacketId     = 0x1F
+	ChunkDataPacketId     = 0x20
+	JoinGamePacketId      = 0x23
+	PluginMessagePacketId = 0x09
 
 	/*** PACKET CONSTS ***/
 	HandshakeStatusNextState = 1
