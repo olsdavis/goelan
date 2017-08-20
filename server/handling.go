@@ -59,6 +59,8 @@ func init() {
 	}
 }
 
+// AssignHandler assigns a new handler appropriated to the given
+// connection's state.
 func AssignHandler(conn *Connection) {
 	h, ok := handlers[conn.ConnectionState]
 	if ok {
