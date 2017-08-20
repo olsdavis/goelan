@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
-	"fmt"
 )
 
 // Represents server list ping response.
@@ -37,7 +36,7 @@ type Response struct {
 
 // Creates a new response.
 func NewResponse() *Response {
-	return &Response{new(bytes.Buffer)}
+	return &Response{data: new(bytes.Buffer)}
 }
 
 // Writes a boolean.
@@ -81,7 +80,7 @@ func (r *Response) WriteVarint(i uint32) *Response {
 }
 
 // Writes an integer.
-func (r *Response) WriteInt(i int) *Response {
+func (r *Response) WriteInt(i int32) *Response {
 	binary.Write(r.data, ByteOrder, i)
 	return r
 }
