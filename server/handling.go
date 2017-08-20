@@ -84,7 +84,6 @@ func CallHandler(packet *RawPacket, sender *Connection) {
 
 // Handles the handshake
 func handshakeHandler(packet *RawPacket, sender *Connection) {
-	log.Debug("J'te sers la main fraté.")
 	sender.ProtocolVersion = packet.ReadUnsignedVarint()
 	// omit the following data, we don't need it
 	packet.ReadString()
@@ -163,7 +162,6 @@ func loginStartHandler(packet *RawPacket, sender *Connection) {
 
 // Handles the encryption request packet.
 func encryptionResponseHandler(packet *RawPacket, sender *Connection) {
-	log.Debug("J'vais t'encrypter fraté.")
 	sharedSecret, err := rsa.DecryptPKCS1v15(rand.Reader, sender.GetServer().GetPrivateKey(), packet.ReadByteArray())
 	if err != nil {
 		panic(err)
@@ -209,7 +207,6 @@ func encryptionResponseHandler(packet *RawPacket, sender *Connection) {
 	response.WriteString(util.ToHypenUUID(profile.UUID))
 	response.WriteString(profile.Name)
 	sender.Write(response.ToRawPacket(LoginSuccessPacketId))
-	log.Debug("Tu peux venir frère !")
 
 	sender.SharedSecret = sharedSecret
 	// release the data we don't need anymore
