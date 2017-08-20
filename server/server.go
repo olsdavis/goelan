@@ -28,15 +28,15 @@ func Get() *Server {
 }
 
 const (
-	propertiesFile = "server.properties"
+	propertiesFile = "server.toml"
 	faviconFile    = "server-icon.png"
 )
 
 // Server's properties, read from the properties file ("server.properties").
 type ServerProperties struct {
-	Port         uint16 // server's port
-	Address      string // server's address
-	Motd         string // server's motd (the description in the server list)
+	Port         uint16 `toml:"port"`        // server's port
+	Address      string `toml:"address"`     // server's address
+	Motd         string `toml:"motd"`        // server's motd (the description in the server list)
 	MaxPlayers   int32  `toml:"max-players"` // the maximal amount of players that the server should host
 	OnlineMode   bool   `toml:"online-mode"` // if true => authentication with Mojang servers
 	ViewDistance int    `toml:"view-distance"`
@@ -47,16 +47,16 @@ type Server struct {
 	run         bool
 	initialized bool             // true, if the server has been initialized
 	properties  ServerProperties // server's properties
-
+	
 	clients    map[string]Connection // online players
 	playerLock sync.Mutex            // lock for the clients map
-
+	
 	serverVersion ServerVersion   // server's version (protocol and name)
 	favicon       string          // the favicon
 	ticker        *time.Ticker    // the ticker for the ticking :)
 	rsaKeypair    *rsa.PrivateKey // the keypair used for encryption
 	publicKey     []byte          // the public key in bytes
-
+	
 	ExitChan chan int // a channel used for server's close
 }
 
@@ -88,24 +88,35 @@ func CreateServerFromProperties() *Server {
 }
 
 func readProperties() *ServerProperties {
+	var properties ServerProperties
+	
 	// properties file read
 	if _, err := os.Open(propertiesFile); err != nil && os.IsNotExist(err) {
-		log.Info("No server.properties file found. Creating one.")
-
+		log.Info(fmt.Sprintf("No %v file found. Creating one.", propertiesFile))
+		
+		properties = ServerProperties{
+			Port:         25565,
+			Address:      "127.0.0.1",
+			Motd:         "A Goelan Minecraft Server",
+			MaxPlayers:   10,
+			OnlineMode:   true,
+			ViewDistance: 15,
+		}
+		
 		f, e := os.Create(propertiesFile)
 		if e != nil {
-			log.Fatal("Could not create the 'server.properties' file!")
+			log.Fatal(fmt.Sprintf("Could not create the '%v' file! %s", propertiesFile, e))
 		}
-		f.Close()
+		
+		defer f.Close()
+		toml.NewEncoder(f).Encode(properties)
 	}
-
-	var properties ServerProperties
-
+	
 	if _, err := toml.DecodeFile(propertiesFile, &properties); err != nil {
 		log.Error("Could not load configuration file 'server.properties'!", err)
 		return nil
 	}
-
+	
 	return &properties
 }
 
@@ -168,23 +179,25 @@ func (s *Server) Start() {
 	if s.initialized {
 		return
 	}
-
+	
+	log.Info(fmt.Sprintf("Protocol #%v (Minecraft %v)", s.serverVersion.ProtocolVersion, s.serverVersion.Name))
+	
 	// listen
 	listen := fmt.Sprintf("%v:%v", s.properties.Address, s.properties.Port)
 	socket, err := net.Listen("tcp", listen)
-
+	
 	if err != nil {
 		panic(fmt.Sprintf("Could not create socket: %v", err))
 	}
-
+	
 	s.load()
-
+	
 	s.initialized = true
-
+	
 	// 20 ticks per second
 	s.ticker = time.NewTicker(time.Second / 20)
 	go s.tick()
-
+	
 	log.Info("Done start up! Waiting for players to join.")
 	log.Info("Listening on", listen)
 	for s.run {
@@ -222,7 +235,7 @@ func (s *Server) load() {
 func (s *Server) Stop() {
 	s.run = false
 	s.ticker.Stop()
-
+	
 	close(s.ExitChan)
 }
 
@@ -233,14 +246,14 @@ func (s *Server) handleConnection(conn net.Conn) {
 	go c.write()
 	for c.IsConnected() {
 		read, err := c.Next()
-
+		
 		if err != nil {
 			if err != io.EOF {
 				log.Error("Encountered an exception during read:", err)
 			}
 			break
 		}
-
+		
 		if read != nil {
 			c.PacketHandler.callHandler(read, c)
 			read.Release()
@@ -252,7 +265,7 @@ func (s *Server) handleConnection(conn net.Conn) {
 		s.playerLock.Lock()
 		delete(s.clients, c.Player.UUID)
 		s.playerLock.Unlock()
-
+		
 		// broadcast
 		message := fmt.Sprintf("%v has left the server.", c.Player.Name)
 		s.BroadcastMessage(message, protocol.DefaultMessageMode)
@@ -267,13 +280,13 @@ func (s *Server) CanConnect(username, uuid string) (bool, string) {
 	if !util.IsValidUsername(username) {
 		return false, "Your username is invalid."
 	}
-
+	
 	// TODO: check if banned
-
+	
 	if ok, _ := s.GetPlayerByName(username); ok {
 		return false, "You already logged in with this account."
 	}
-
+	
 	return true, ""
 }
 
