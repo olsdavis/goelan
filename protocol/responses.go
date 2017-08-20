@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
-	"fmt"
 )
 
 // Represents server list ping response.
