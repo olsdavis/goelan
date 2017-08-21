@@ -213,7 +213,7 @@ func encryptionResponseHandler(packet *RawPacket, sender *Connection) {
 
 	sender.SharedSecret = sharedSecret
 	// release the data we don't need anymore
-	sender.VerifyToken = EmtpyArray
+	sender.VerifyToken = emptyArray
 	sender.VerifyUsername = ""
 
 	if ok, reason := sender.GetServer().CanConnect(profile.Name, profile.UUID); !ok {

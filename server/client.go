@@ -10,14 +10,12 @@ import (
 	"io"
 	"net"
 	"sync"
-	"time"
 )
 
 type ConnectionState int
 
 var (
-	ErrNotEnoughBytes = errors.New("not enough bytes to read")
-	EmtpyArray        []byte
+	emptyArray []byte
 )
 
 const (
@@ -76,7 +74,7 @@ func NewConnection(socket net.Conn, server *Server) *Connection {
 		writeChan:       make(chan *protocol.RawPacket),
 		exitChan:        make(chan int, 1),
 		ConnectionState: HandshakeState,
-		VerifyToken:     EmtpyArray,
+		VerifyToken:     emptyArray,
 		VerifyUsername:  "",
 		Player:          nil,
 		connected:       true,
@@ -98,17 +96,12 @@ func (c *Connection) Next() (*protocol.RawPacket, error) {
 	}
 
 	buffer := make([]byte, size)
-	read, err := io.ReadAtLeast(c.Reader, buffer, int(size))
+	_, err = io.ReadAtLeast(c.Reader, buffer, int(size))
 	if err != nil {
-		// Error comes from here
 		return nil, err
-	} else if read < int(size) {
-		return nil, ErrNotEnoughBytes
 	}
-
 	id, offset := binary.Uvarint(buffer)
 	rawPacket := protocol.NewRawPacket(id, buffer[offset:], nil)
-
 	return rawPacket, nil
 }
 
