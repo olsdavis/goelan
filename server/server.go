@@ -427,7 +427,6 @@ func (s *Server) GetPlayerByUUID(uuid string) (bool, *player.Player) {
 // This function runs a go routine for each player, ands waits
 // the end of each routine.
 func (s *Server) ForEachPlayer(action func(*Connection)) {
-	defer s.playerLock.Unlock()
 	s.playerLock.Lock()
 	wg := sync.WaitGroup{}
 	for _, client := range s.clients {
@@ -438,20 +437,21 @@ func (s *Server) ForEachPlayer(action func(*Connection)) {
 		}()
 	}
 	wg.Wait()
+	s.playerLock.Unlock()
 }
 
 // ForEachPlayerSync executes the given action for each online player.
 func (s *Server) ForEachPlayerSync(action func(*Connection)) {
-	defer s.playerLock.Unlock()
 	s.playerLock.Lock()
 	for _, client := range s.clients {
 		action(client)
 	}
+	s.playerLock.Unlock()
 }
 
 // Broadcasts the given packet to all the online players (async).
 func (s *Server) BroadcastPacket(packet *protocol.RawPacket) {
-	s.ForEachPlayer(func(c *Connection) {
+	s.ForEachPlayerSync(func(c *Connection) {
 		c.Write(packet)
 	})
 }
