@@ -3,7 +3,7 @@ package player
 type PlayerProfile struct {
 	UUID       string     `json:"id"`
 	Name       string     `json:"name"`
-	properties []Property `json:"properties"`
+	Properties []Property `json:"properties"`
 }
 
 type Property struct {

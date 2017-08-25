@@ -30,12 +30,11 @@ func RegisterCommand(command Command) {
 }
 
 // Called when a command is executed by the console or a player.
-func CommandExecute(line string, sender CommandSender) {
+func ExecuteCommand(line string, sender CommandSender) {
 	if len(line) == 0 {
 		return
 	}
 
-	line = line[:len(line)-1] // removes the new line char
 	parts := strings.Split(line, " ")
 	label := parts[0]
 	if handler, ok := commands[label]; ok {

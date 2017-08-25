@@ -56,7 +56,9 @@ func init() {
 	}
 	handlers[PlayState] = stateMapHandler{
 		map[uint64]PacketHandler{
-			PluginMessagePacketId: pluginMessageHandler,
+			PluginMessagePacketId:     pluginMessageHandler,
+			KeepAliveIncomingPacketId: keepAliveHandler,
+			ClientSettingsPacketId:    clientSettingsHandler,
 		},
 	}
 }
@@ -74,17 +76,9 @@ func AssignHandler(conn *Connection) {
 	}
 }
 
-// Calls the handler associated to the given packet's id.
-func CallHandler(packet *RawPacket, sender *Connection) {
-	handler := handlers[sender.ConnectionState]
-	if handler != nil {
-		handler.callHandler(packet, sender)
-	}
-}
-
 /*** HANDSHAKE HANDLERS ***/
 
-// Handles the handshake
+// Handles the handshake.
 func handshakeHandler(packet *RawPacket, sender *Connection) {
 	sender.ProtocolVersion = packet.ReadUnsignedVarint()
 	// omit the following data, we don't need it
@@ -112,12 +106,12 @@ func handshakeHandler(packet *RawPacket, sender *Connection) {
 		response.WriteJSON(list)
 		sender.Write(response.ToRawPacket(HandshakePacketId))
 
-	// Login (wants to play)
+		// Login (wants to play)
 	case HandshakeLoginNextState:
 		sender.ConnectionState = LoginState
 		AssignHandler(sender)
 
-	// Unknown
+		// Unknown
 	default:
 		log.Error("Client handshake next state:", nextState)
 	}
@@ -228,21 +222,29 @@ func encryptionResponseHandler(packet *RawPacket, sender *Connection) {
 	response.Clear()
 	// Join Game packet
 	response.WriteInt(0). // entity id
-				WriteUnsignedByte(1).   // gamemode
-				WriteInt(0).            // dimension
-				WriteUnsignedByte(0).   // difficulty
-				WriteUnsignedByte(0).   // max players (ignored)
-				WriteString("default"). // level type
-				WriteBoolean(false)     // reduced debug info
+		WriteUnsignedByte(1). // gamemode
+		WriteInt(0). // dimension
+		WriteUnsignedByte(0). // difficulty
+		WriteUnsignedByte(0). // max players (ignored)
+		WriteString("default"). // level type
+		WriteBoolean(false) // reduced debug info
 	sender.Write(response.ToRawPacket(JoinGamePacketId))
 	response.Clear()
 }
 
 /*** PLAY HANDLERS ***/
 
+func clientSettingsHandler(packet *RawPacket, sender *Connection) {
+}
+
 func pluginMessageHandler(packet *RawPacket, sender *Connection) {
 }
 
 func keepAliveHandler(packet *RawPacket, sender *Connection) {
-
+	id := packet.ReadVarint()
+	if sender.LastKeepAlive.ID == id {
+		sender.Lock()
+		sender.LastKeepAlive.ID = -1
+		sender.Unlock()
+	}
 }

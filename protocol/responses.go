@@ -56,7 +56,10 @@ func (r *Response) WriteChat(obj string) *Response {
 // WriteJSON writes the given interface as a JSON string to the current response.
 // (Currently ignores failure.)
 func (r *Response) WriteJSON(obj interface{}) *Response {
-	j, _ := json.Marshal(obj)
+	j, err := json.Marshal(obj)
+	if err != nil {
+		panic(err)
+	}
 	return r.WriteByteArray(j)
 }
 
@@ -72,9 +75,18 @@ func (r *Response) WriteUnsignedByte(b uint8) *Response {
 	return r
 }
 
-// WriteVarInt writes the given VarInt to the current response.
-func (r *Response) WriteVarint(i uint32) *Response {
+// WriteUVarint writes the given UVarint to the current response.
+func (r *Response) WriteUVarint(i uint32) *Response {
 	_, err := r.data.Write(Uvarint(i))
+	if err != nil {
+		panic(err)
+	}
+	return r
+}
+
+// WriteVarInt writes the given Varint to the current response.
+func (r *Response) WriteVarInt(i int32) *Response {
+	_, err := r.data.Write(Varint(i))
 	if err != nil {
 		panic(err)
 	}
@@ -95,7 +107,7 @@ func (r *Response) WriteLong(l int64) *Response {
 
 // WriteByteArray writes the given byte array to the current response.
 func (r *Response) WriteByteArray(b []byte) *Response {
-	r.WriteVarint(uint32(len(b)))
+	r.WriteUVarint(uint32(len(b)))
 	r.data.Write(b)
 	return r
 }

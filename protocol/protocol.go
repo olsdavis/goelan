@@ -3,9 +3,7 @@ package protocol
 import (
 	"encoding/binary"
 	"errors"
-	"fmt"
 	"github.com/olsdavis/goelan/log"
-	"github.com/olsdavis/goelan/util"
 	"sync"
 )
 
@@ -43,6 +41,14 @@ func NewRawPacket(id uint64, data []byte, callback Callback) *RawPacket {
 		b,
 		callback,
 	}
+}
+
+func (r *RawPacket) ReadByte() byte {
+	b, err := r.Data.ReadByte()
+	if err != nil {
+		panic(err)
+	}
+	return b
 }
 
 func (r *RawPacket) ReadUnsignedShort() uint16 {
@@ -107,16 +113,18 @@ const (
 	// Login state
 	LoginStartPacketId           = 0x00
 	LoginStateDisconnectPacketId = 0x00
-	LoginSuccessPacketId         = 0x02
-	EncryptionResponsePacketId   = 0x01
 	EncryptionRequestPacketId    = 0x01
+	EncryptionResponsePacketId   = 0x01
+	LoginSuccessPacketId         = 0x02
 	// Play state
-	ChatPacketId          = 0x10
-	KickPlayerPacketId    = 0x1A
-	KeepAlivePacketId     = 0x1F
-	ChunkDataPacketId     = 0x20
-	JoinGamePacketId      = 0x23
-	PluginMessagePacketId = 0x09
+	ClientSettingsPacketId    = 0x04
+	PluginMessagePacketId     = 0x09
+	ChatPacketId              = 0x10
+	KeepAliveIncomingPacketId = 0x0B
+	KickPlayerPacketId        = 0x1A
+	KeepAliveOutgoingPacketId = 0x1F
+	ChunkDataPacketId         = 0x20
+	JoinGamePacketId          = 0x23
 
 	/*** PACKET CONSTS ***/
 	HandshakeStatusNextState = 1
@@ -134,54 +142,3 @@ const (
 	// action bar message
 	ActionBarMode
 )
-
-/*** Util ***/
-
-func Uvarint(n uint32) []byte {
-	buf := make([]byte, 5)
-	l := binary.PutUvarint(buf, uint64(n))
-
-	return buf[:l]
-}
-
-type ByteReader struct {
-	Buf  []byte
-	read int
-}
-
-func (br *ByteReader) SetData(data []byte) {
-	br.Buf = data
-}
-
-func (br *ByteReader) ReadByte() (byte, error) {
-	if br.read >= len(br.Buf) {
-		return 0, errors.New("out of bounds")
-	}
-
-	defer func() {
-		br.read++
-	}()
-	return br.Buf[br.read], nil
-}
-
-func (br *ByteReader) Read(p []byte) (int, error) {
-	remaining := br.Buf[br.read:]
-	if len(remaining) == 0 {
-		return 0, ReadAllError
-	}
-	tr := util.Min(len(remaining), len(p))
-	for i := 0; i < tr; i++ {
-		p[i] = remaining[i]
-	}
-	br.read += tr
-	return tr, nil
-}
-
-func (br *ByteReader) Reset() {
-	br.Buf = emptyArray
-	br.read = 0
-}
-
-func (br ByteReader) String() string {
-	return fmt.Sprintf("{read:%v, buf:%v}", br.read, br.Buf)
-}

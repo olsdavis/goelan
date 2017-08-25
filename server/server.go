@@ -33,7 +33,7 @@ const (
 	faviconFile    = "server-icon.png"
 )
 
-// Server's properties, read from the properties file ("server.properties").
+// Server's properties, read from the properties file ("server.toml").
 type ServerProperties struct {
 	Port         uint16 `toml:"port"`        // server's port
 	Address      string `toml:"address"`     // server's address
@@ -49,15 +49,15 @@ type Server struct {
 	initialized bool             // true, if the server has been initialized
 	properties  ServerProperties // server's properties
 
-	clients    map[string]Connection // online players
+	clients    map[string]*Connection // online players
 	playerLock sync.Mutex            // lock for the clients map
 
-	serverVersion ServerVersion   // server's version (protocol and name)
-	favicon       string          // the favicon
-	ticker        *time.Ticker    // the ticker for the ticking :)
-	keepAlive     *time.Ticker    // the ticker for the keep alive packets
-	rsaKeypair    *rsa.PrivateKey // the keypair used for encryption
-	publicKey     []byte          // the public key in bytes
+	serverVersion   ServerVersion   // server's version (protocol and name)
+	favicon         string          // the favicon
+	ticker          *time.Ticker    // the ticker for the ticking :)
+	keepAliveTicker *time.Ticker    // the ticker used for sending keep alive packets
+	rsaKeypair      *rsa.PrivateKey // the keypair used for encryption
+	publicKey       []byte          // the public key in bytes
 
 	ExitChan chan int // a channel used for server's close
 }
@@ -68,18 +68,18 @@ func CreateServer(properties ServerProperties) *Server {
 		panic("already created a server")
 	}
 	serverInstance = &Server{
-		run:           true,
-		initialized:   false,
-		properties:    properties,
-		clients:       make(map[string]Connection),
-		playerLock:    sync.Mutex{},
-		serverVersion: ServerVersion{"1.11.2", 316},
-		favicon:       "",
-		ticker:        nil,
-		keepAlive:     nil,
-		rsaKeypair:    encrypt.GenerateKeyPair(),
-		publicKey:     nil,
-		ExitChan:      make(chan int, 1),
+		run:             true,
+		initialized:     false,
+		properties:      properties,
+		clients:         make(map[string]*Connection),
+		playerLock:      sync.Mutex{},
+		serverVersion:   ServerVersion{"1.12.1", 338},
+		favicon:         "",
+		ticker:          nil,
+		keepAliveTicker: nil,
+		rsaKeypair:      encrypt.GenerateKeyPair(),
+		publicKey:       nil,
+		ExitChan:        make(chan int, 1),
 	}
 	return serverInstance
 }
@@ -199,9 +199,9 @@ func (s *Server) Start() {
 
 	// 20 ticks per second
 	s.ticker = time.NewTicker(time.Second / 20)
-	s.keepAlive = time.NewTicker(time.Second * 2)
+	s.keepAliveTicker = time.NewTicker(time.Second)
 	go s.tick()
-	go s.sendKeepAlive()
+	go s.keepAlive()
 
 	log.Info("Done start up! Waiting for players to join.")
 	log.Info("Listening on", listen)
@@ -219,15 +219,24 @@ func (s *Server) tick() {
 	}
 }
 
-// sendKeepAlive sends a Keep Alive packet every 15 seconds.
-func (s *Server) sendKeepAlive() {
-	keepAlive := protocol.NewResponse()
+func(s *Server) keepAlive() {
 	for s.run {
-		<-s.keepAlive.C
-		id := uint32(rand.Intn(65535) + 1)
-		keepAlive.WriteVarint(id)
-		s.ApplyToAllSync(func(c Connection) {
-			// TODO
+		<-s.keepAliveTicker.C
+
+		id := int32(rand.Intn(0xFFFE))
+		packet := protocol.NewResponse().WriteVarInt(id).ToRawPacket(protocol.KeepAliveOutgoingPacketId)
+		s.ApplyToAllSync(func(c *Connection) {
+			c.Lock()
+			if c.LastKeepAlive.ID == -1 {
+				c.LastKeepAlive.ID = id
+				c.LastKeepAlive.Deadline = time.Now().Add(time.Second * time.Duration(30))
+				c.Write(packet)
+			} else {
+				if c.LastKeepAlive.Deadline.Before(time.Now()) {
+					c.Disconnect("Timed out")
+				}
+			}
+			c.Unlock()
 		})
 	}
 }
@@ -240,7 +249,7 @@ func (s *Server) load() {
 	if b, _ := util.Exists(faviconFile); b {
 		contents, err := ioutil.ReadFile(faviconFile)
 		if err != nil {
-			log.Error("Could not load server-icon.png", err)
+			log.Error("Could not load", faviconFile, err)
 		} else {
 			s.favicon = "data:image/png;base64," + base64.StdEncoding.EncodeToString(contents)
 		}
@@ -251,7 +260,6 @@ func (s *Server) load() {
 func (s *Server) Stop() {
 	s.run = false
 	s.ticker.Stop()
-	s.keepAlive.Stop()
 	close(s.ExitChan)
 }
 
@@ -317,12 +325,12 @@ func (s *Server) FinishLogin(profile player.PlayerProfile, connection *Connectio
 	}
 	connection.Player = &pl
 	s.playerLock.Lock()
-	s.clients[pl.UUID] = *connection
+	s.clients[pl.UUID] = connection
 	s.playerLock.Unlock()
 	// announce login in chat and logs
-	message := fmt.Sprintf("%v has joined the server.", profile.Name)
-	log.Info(message)
-	s.BroadcastMessage(message, protocol.DefaultMessageMode)
+	//message := fmt.Sprintf("%v has joined the server.", profile.Name)
+	//log.Info(message)
+	//s.BroadcastMessage(message, protocol.DefaultMessageMode)
 }
 
 // GetOnlinePlayersCount returns the online players count.
@@ -359,8 +367,9 @@ func (s *Server) GetPlayerByUUID(uuid string) (bool, *player.Player) {
 }
 
 // ApplyToAll executes the given action for each online player.
-// This function runs a go routine for each player.
-func (s *Server) ApplyToAll(action func(Connection)) {
+// This function runs a go routine for each player, ands waits
+//
+func (s *Server) ApplyToAll(action func(*Connection)) {
 	defer s.playerLock.Unlock()
 	s.playerLock.Lock()
 	wg := sync.WaitGroup{}
@@ -375,7 +384,7 @@ func (s *Server) ApplyToAll(action func(Connection)) {
 }
 
 // ApplyToAllSync executes the given action for each online player.
-func (s *Server) ApplyToAllSync(action func(Connection)) {
+func (s *Server) ApplyToAllSync(action func(*Connection)) {
 	defer s.playerLock.Unlock()
 	s.playerLock.Lock()
 	for _, client := range s.clients {
@@ -385,7 +394,7 @@ func (s *Server) ApplyToAllSync(action func(Connection)) {
 
 // Broadcasts the given packet to all the online players (async).
 func (s *Server) BroadcastPacket(packet *protocol.RawPacket) {
-	s.ApplyToAll(func(c Connection) {
+	s.ApplyToAll(func(c *Connection) {
 		c.Write(packet)
 	})
 }
@@ -396,7 +405,7 @@ func (s *Server) BroadcastPacket(packet *protocol.RawPacket) {
 // - DefaultMessageMode (mode 1): what you should use (system messages);
 // - ActionBarMode (mode 2): if you want to send messages above the hotbar, use this mode.
 func (s *Server) BroadcastMessage(message string, mode protocol.MessageMode) {
-	s.ApplyToAllSync(func(c Connection) {
+	s.ApplyToAllSync(func(c *Connection) {
 		c.SendMessage(message, mode)
 	})
 }

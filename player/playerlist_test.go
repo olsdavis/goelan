@@ -19,6 +19,6 @@ func TestGetPlayers(t *testing.T) {
 	banList.LoadFile("banlist.json.test")
 	players := banList.GetPlayers()
 	if len(players) == 0 {
-		t.Error("GetPlayers() returns an empty slice. Currently returning:", players)
+		t.Error("GetPlayers() returns an empty slice.")
 	}
 }

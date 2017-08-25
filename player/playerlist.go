@@ -19,7 +19,7 @@ type BanList struct {
 	players map[string]string
 }
 
-type JsonProfile struct {
+type BanEntry struct {
 	UUID   string `json:"uuid"`
 	Reason string `json:"reason,omitempty"`
 }
@@ -38,7 +38,7 @@ func (list *BanList) LoadFile(path string) error {
 		return err
 	}
 
-	bans := make([]JsonProfile, 0)
+	bans := make([]BanEntry, 0)
 	err = json.Unmarshal(content, &bans)
 
 	if err != nil {

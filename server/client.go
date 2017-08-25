@@ -3,13 +3,13 @@ package server
 import (
 	"bytes"
 	"encoding/binary"
-	"errors"
 	"github.com/olsdavis/goelan/log"
 	"github.com/olsdavis/goelan/player"
 	"github.com/olsdavis/goelan/protocol"
 	"io"
 	"net"
 	"sync"
+	"time"
 )
 
 type ConnectionState int
@@ -19,7 +19,7 @@ var (
 )
 
 const (
-	HandshakeState = iota
+	HandshakeState ConnectionState = iota
 	LoginState
 	PlayState
 )
@@ -45,6 +45,11 @@ func (reader FullReader) Read(p []byte) (int, error) {
 	return reader.R.Read(p)
 }
 
+type KeepAliveData struct {
+	Deadline time.Time
+	ID       int32
+}
+
 type Connection struct {
 	server          *Server
 	Writer          io.WriteCloser
@@ -60,6 +65,8 @@ type Connection struct {
 	SharedSecret   []byte // used for encrypting and decrypting data
 
 	Player *player.Player
+
+	LastKeepAlive KeepAliveData
 
 	connected bool
 	sync.Mutex
@@ -77,6 +84,9 @@ func NewConnection(socket net.Conn, server *Server) *Connection {
 		VerifyToken:     emptyArray,
 		VerifyUsername:  "",
 		Player:          nil,
+		LastKeepAlive:   KeepAliveData{
+			ID: -1,
+		},
 		connected:       true,
 		Mutex:           sync.Mutex{},
 	}
@@ -145,10 +155,10 @@ func (c *Connection) write() {
 
 // Creates a byte array from the given raw packet. Releases the packet at the end.
 func toByteArray(packet *protocol.RawPacket) []byte {
-	defer packet.Release()
 	send := new(bytes.Buffer)
 	send.Write(protocol.Uvarint(uint32(packet.ID)))
 	send.Write(packet.Data.Buf)
+	packet.Release()
 	return append(protocol.Uvarint(uint32(send.Len())), send.Bytes()...)
 }
 
