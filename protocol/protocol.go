@@ -51,6 +51,19 @@ func (r *RawPacket) ReadByte() byte {
 	return b
 }
 
+func (r *RawPacket) ReadUnsignedByte() byte {
+	var ubyte uint8
+	err := binary.Read(r.Data, ByteOrder, &ubyte)
+	if err != nil {
+		log.Error("Could not read unsigned short:", err)
+	}
+	return ubyte
+}
+
+func (r *RawPacket) ReadBoolean() bool {
+	return r.ReadByte() == 1
+}
+
 func (r *RawPacket) ReadUnsignedShort() uint16 {
 	var short uint16
 	err := binary.Read(r.Data, ByteOrder, &short)

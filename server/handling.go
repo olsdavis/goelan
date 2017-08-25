@@ -12,6 +12,7 @@ import (
 	"github.com/olsdavis/goelan/log"
 	. "github.com/olsdavis/goelan/protocol"
 	"github.com/olsdavis/goelan/util"
+	"github.com/olsdavis/goelan/player"
 )
 
 type PacketHandler func(packet *RawPacket, sender *Connection)
@@ -235,6 +236,12 @@ func encryptionResponseHandler(packet *RawPacket, sender *Connection) {
 /*** PLAY HANDLERS ***/
 
 func clientSettingsHandler(packet *RawPacket, sender *Connection) {
+	sender.Player.Settings.Locale = packet.ReadString()
+	sender.Player.Settings.ViewDistance = packet.ReadByte()
+	sender.Player.Settings.ChatMode = player.ChatMode(packet.ReadVarint())
+	sender.Player.Settings.ColorsEnabled = packet.ReadBoolean()
+	sender.Player.Settings.DisplayedSkinParts = packet.ReadUnsignedByte()
+	sender.Player.Settings.MainHand = player.Hand(packet.ReadVarint())
 }
 
 func pluginMessageHandler(packet *RawPacket, sender *Connection) {

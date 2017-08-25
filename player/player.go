@@ -18,6 +18,7 @@ type Player struct {
 	// key => the permission; value => true if the player has the permission
 	Permissions map[string]bool
 	Profile     PlayerProfile
+	Settings    *ClientSettings
 }
 
 // Returns true if the player has the given permission.
