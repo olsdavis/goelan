@@ -110,6 +110,7 @@ func (r *RawPacket) ReadByteArrayMax(max uint32) []byte {
 	}
 	buf := make([]byte, size)
 	r.Data.Read(buf)
+	return buf
 }
 
 func (r *RawPacket) ReadByteArray() []byte {
@@ -145,14 +146,20 @@ const (
 	EncryptionResponsePacketId   = 0x01
 	LoginSuccessPacketId         = 0x02
 	// Play state
-	ClientSettingsPacketId    = 0x04
-	PluginMessagePacketId     = 0x09
-	ChatPacketId              = 0x10
-	KeepAliveIncomingPacketId = 0x0B
-	KickPlayerPacketId        = 0x1A
-	KeepAliveOutgoingPacketId = 0x1F
-	ChunkDataPacketId         = 0x20
-	JoinGamePacketId          = 0x23
+	IncomingChatPacketId          = 0x02
+	ClientStatusPacketId          = 0x03
+	ClientSettingsPacketId        = 0x04
+	AnimationPacketId             = 0x06
+	PluginMessagePacketId         = 0x09
+	ChatPacketId                  = 0x10
+	KeepAliveIncomingPacketId     = 0x0B
+	KickPlayerPacketId            = 0x1A
+	KeepAliveOutgoingPacketId     = 0x1F
+	ChunkDataPacketId             = 0x20
+	JoinGamePacketId              = 0x23
+	PlayerAbilitiesPacketId       = 0x2C
+	PlayerListItemPacketId        = 0x2E
+	PlayerPositionAndLookPacketId = 0x2F
 
 	/*** PACKET CONSTS ***/
 	HandshakeStatusNextState = 1

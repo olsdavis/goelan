@@ -139,6 +139,10 @@ func (c *Connection) write() {
 				continue
 			}
 
+			if packet.ID == protocol.ChatPacketId {
+				log.Debug(packet.Data.Buf)
+			}
+
 			_, err := c.Writer.Write(toByteArray(packet))
 
 			// omit this error

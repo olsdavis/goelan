@@ -17,6 +17,7 @@ import (
 	"sync"
 	"time"
 	"math/rand"
+	"github.com/olsdavis/goelan/world"
 )
 
 var (
@@ -50,7 +51,7 @@ type Server struct {
 	properties  ServerProperties // server's properties
 
 	clients    map[string]*Connection // online players
-	playerLock sync.Mutex            // lock for the clients map
+	playerLock sync.Mutex             // lock for the clients map
 
 	serverVersion   ServerVersion   // server's version (protocol and name)
 	favicon         string          // the favicon
@@ -58,6 +59,8 @@ type Server struct {
 	keepAliveTicker *time.Ticker    // the ticker used for sending keep alive packets
 	rsaKeypair      *rsa.PrivateKey // the keypair used for encryption
 	publicKey       []byte          // the public key in bytes
+
+	world *world.World // one world only, for the moment
 
 	ExitChan chan int // a channel used for server's close
 }
@@ -79,6 +82,7 @@ func CreateServer(properties ServerProperties) *Server {
 		keepAliveTicker: nil,
 		rsaKeypair:      encrypt.GenerateKeyPair(),
 		publicKey:       nil,
+		world:           nil,
 		ExitChan:        make(chan int, 1),
 	}
 	return serverInstance
@@ -100,7 +104,7 @@ func readProperties() *ServerProperties {
 		properties = ServerProperties{
 			Port:         25565,
 			Address:      "127.0.0.1",
-			Motd:         "A Goelan Minecraft Server",
+			Motd:         "A Goelan Minecraft server",
 			MaxPlayers:   10,
 			OnlineMode:   true,
 			ViewDistance: 15,
@@ -110,7 +114,6 @@ func readProperties() *ServerProperties {
 		if e != nil {
 			log.Fatal(fmt.Sprintf("Could not create the '%v' file! %s", propertiesFile, e))
 		}
-
 		defer f.Close()
 		toml.NewEncoder(f).Encode(properties)
 	}
@@ -123,22 +126,23 @@ func readProperties() *ServerProperties {
 	return &properties
 }
 
-// Returns true if the server has a favicon image. (Which appears in the server list.)
+// HasFavicon returns whether the server has a favicon image or not.
+// (Which appears in the server list.)
 func (s *Server) HasFavicon() bool {
 	return s.favicon != ""
 }
 
-// Returns the favicon, may be empty - check before with HasFavicon().
+// GetFavicon returns the favicon; it may be empty - check before with HasFavicon().
 func (s *Server) GetFavicon() string {
 	return s.favicon
 }
 
-// Returns server's MOTD. (Which is the description in the server list.)
+// GetMotd returns server's MOTD. (Which is the description in the server list.)
 func (s *Server) GetMotd() string {
 	return s.properties.Motd
 }
 
-// Returns the maximal amount of players the server should host.
+// GetMaxPlayers returns the maximal amount of players the server can host.
 // 0 if no limit. (There is no limit if max-players is set to 0 or less.)
 func (s *Server) GetMaxPlayers() uint {
 	if s.properties.MaxPlayers <= 0 {
@@ -147,12 +151,13 @@ func (s *Server) GetMaxPlayers() uint {
 	return uint(s.properties.MaxPlayers)
 }
 
-// Returns true if the server must authenticate players with Mojang servers.
+// IsOnlineMode returns whether the server must authenticate players with
+// Mojang servers or not.
 func (s *Server) IsOnlineMode() bool {
 	return s.properties.OnlineMode
 }
 
-// Returns the public key. (Generates it if it has not been done yet.)
+// GetPublicKey returns the public key. (Generates it if it has not been done yet.)
 func (s *Server) GetPublicKey() []byte {
 	if s.publicKey == nil {
 		s.publicKey = encrypt.GeneratePublicKey(s.rsaKeypair)
@@ -160,14 +165,19 @@ func (s *Server) GetPublicKey() []byte {
 	return s.publicKey
 }
 
-// Returns server's private key.
+// GetPrivateKey returns server's private key.
 func (s *Server) GetPrivateKey() *rsa.PrivateKey {
 	return s.rsaKeypair
 }
 
-// Returns server's version (protocol and name).
+// GetServerVersion returns server's version (protocol and name).
 func (s *Server) GetServerVersion() ServerVersion {
 	return s.serverVersion
+}
+
+// GetViewDistance returns server's view distance.
+func (s *Server) GetViewDistance() int {
+	return s.properties.ViewDistance
 }
 
 // Returns true if the server is currently running
@@ -203,6 +213,8 @@ func (s *Server) Start() {
 	go s.tick()
 	go s.keepAlive()
 
+	s.world = world.NewWorld("default")
+
 	log.Info("Done start up! Waiting for players to join.")
 	log.Info("Listening on", listen)
 	for s.run {
@@ -219,13 +231,13 @@ func (s *Server) tick() {
 	}
 }
 
-func(s *Server) keepAlive() {
+func (s *Server) keepAlive() {
 	for s.run {
 		<-s.keepAliveTicker.C
 
 		id := int32(rand.Intn(0xFFFE))
-		packet := protocol.NewResponse().WriteVarInt(id).ToRawPacket(protocol.KeepAliveOutgoingPacketId)
-		s.ApplyToAllSync(func(c *Connection) {
+		packet := protocol.NewResponse().WriteVarint(id).ToRawPacket(protocol.KeepAliveOutgoingPacketId)
+		s.ForEachPlayerSync(func(c *Connection) {
 			c.Lock()
 			if c.LastKeepAlive.ID == -1 {
 				c.LastKeepAlive.ID = id
@@ -322,11 +334,42 @@ func (s *Server) FinishLogin(profile player.PlayerProfile, connection *Connectio
 		UUID:        profile.UUID,
 		Permissions: make(map[string]bool),
 		Profile:     profile,
+		Settings:    &player.ClientSettings{},
+		Location: &world.Location{
+			SimpleLocation: world.SimpleLocation{
+				X: 0,
+				Y: 80,
+				Z: 0,
+			},
+			Orientation: world.Orientation{
+				Yaw:   90,
+				Pitch: 0,
+			},
+		},
 	}
 	connection.Player = &pl
 	s.playerLock.Lock()
 	s.clients[pl.UUID] = connection
 	s.playerLock.Unlock()
+	packet := protocol.NewResponse()
+	// send position and look packet
+	packet.WriteDouble(float64(pl.Location.X)).
+		WriteDouble(float64(pl.Location.Y)).
+		WriteDouble(float64(pl.Location.Z))
+	packet.WriteFloat(pl.Location.Yaw)
+	packet.WriteFloat(pl.Location.Pitch)
+	packet.WriteByte(0)
+	packet.WriteVarint(int32(rand.Intn(0xFFFE)))
+	connection.Write(packet.ToRawPacket(protocol.PlayerPositionAndLookPacketId))
+	packet.Clear()
+	// send abilities packet
+	packet.WriteByte(0)
+	packet.WriteFloat(1)
+	packet.WriteFloat(1)
+	connection.Write(packet.ToRawPacket(protocol.PlayerAbilitiesPacketId))
+	packet.Clear()
+	// broadcast player list item
+
 	// announce login in chat and logs
 	//message := fmt.Sprintf("%v has joined the server.", profile.Name)
 	//log.Info(message)
@@ -338,6 +381,20 @@ func (s *Server) GetOnlinePlayersCount() uint {
 	defer s.playerLock.Unlock()
 	s.playerLock.Lock()
 	return uint(len(s.clients))
+}
+
+// GetAllPlayers returns a slice containing all the online
+// players.
+func (s *Server) GetAllPlayers() []*player.Player {
+	i := 0
+	s.playerLock.Lock()
+	ret := make([]*player.Player, len(s.clients))
+	for _, client := range s.clients {
+		ret[i] = client.Player
+		i++
+	}
+	s.playerLock.Unlock()
+	return ret
 }
 
 // GetPlayerByName returns true if the player associated to the given username has been found
@@ -366,10 +423,10 @@ func (s *Server) GetPlayerByUUID(uuid string) (bool, *player.Player) {
 	}
 }
 
-// ApplyToAll executes the given action for each online player.
+// ForEachPlayer executes the given action for each online player.
 // This function runs a go routine for each player, ands waits
-//
-func (s *Server) ApplyToAll(action func(*Connection)) {
+// the end of each routine.
+func (s *Server) ForEachPlayer(action func(*Connection)) {
 	defer s.playerLock.Unlock()
 	s.playerLock.Lock()
 	wg := sync.WaitGroup{}
@@ -383,8 +440,8 @@ func (s *Server) ApplyToAll(action func(*Connection)) {
 	wg.Wait()
 }
 
-// ApplyToAllSync executes the given action for each online player.
-func (s *Server) ApplyToAllSync(action func(*Connection)) {
+// ForEachPlayerSync executes the given action for each online player.
+func (s *Server) ForEachPlayerSync(action func(*Connection)) {
 	defer s.playerLock.Unlock()
 	s.playerLock.Lock()
 	for _, client := range s.clients {
@@ -394,7 +451,7 @@ func (s *Server) ApplyToAllSync(action func(*Connection)) {
 
 // Broadcasts the given packet to all the online players (async).
 func (s *Server) BroadcastPacket(packet *protocol.RawPacket) {
-	s.ApplyToAll(func(c *Connection) {
+	s.ForEachPlayer(func(c *Connection) {
 		c.Write(packet)
 	})
 }
@@ -405,7 +462,7 @@ func (s *Server) BroadcastPacket(packet *protocol.RawPacket) {
 // - DefaultMessageMode (mode 1): what you should use (system messages);
 // - ActionBarMode (mode 2): if you want to send messages above the hotbar, use this mode.
 func (s *Server) BroadcastMessage(message string, mode protocol.MessageMode) {
-	s.ApplyToAllSync(func(c *Connection) {
+	s.ForEachPlayerSync(func(c *Connection) {
 		c.SendMessage(message, mode)
 	})
 }

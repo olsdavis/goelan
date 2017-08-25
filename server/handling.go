@@ -60,6 +60,8 @@ func init() {
 			PluginMessagePacketId:     pluginMessageHandler,
 			KeepAliveIncomingPacketId: keepAliveHandler,
 			ClientSettingsPacketId:    clientSettingsHandler,
+			ClientStatusPacketId:      clientStatusHandler,
+			IncomingChatPacketId:      chatMessageHandler,
 		},
 	}
 }
@@ -219,7 +221,6 @@ func encryptionResponseHandler(packet *RawPacket, sender *Connection) {
 	// New connection state
 	sender.ConnectionState = PlayState
 	AssignHandler(sender)
-	sender.GetServer().FinishLogin(*profile, sender)
 	response.Clear()
 	// Join Game packet
 	response.WriteInt(0). // entity id
@@ -231,6 +232,7 @@ func encryptionResponseHandler(packet *RawPacket, sender *Connection) {
 		WriteBoolean(false) // reduced debug info
 	sender.Write(response.ToRawPacket(JoinGamePacketId))
 	response.Clear()
+	sender.GetServer().FinishLogin(*profile, sender)
 }
 
 /*** PLAY HANDLERS ***/
@@ -244,6 +246,9 @@ func clientSettingsHandler(packet *RawPacket, sender *Connection) {
 	sender.Player.Settings.MainHand = player.Hand(packet.ReadVarint())
 }
 
+func clientStatusHandler(packet *RawPacket, sender *Connection) {
+}
+
 func pluginMessageHandler(packet *RawPacket, sender *Connection) {
 }
 
@@ -254,4 +259,9 @@ func keepAliveHandler(packet *RawPacket, sender *Connection) {
 		sender.LastKeepAlive.ID = -1
 		sender.Unlock()
 	}
+}
+
+func chatMessageHandler(packet *RawPacket, sender *Connection) {
+	message := packet.ReadString()
+	log.Debug(sender.Player.Name, "says", message)
 }

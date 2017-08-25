@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
+	"reflect"
 )
 
 // Represents server list ping response.
@@ -84,8 +85,8 @@ func (r *Response) WriteUVarint(i uint32) *Response {
 	return r
 }
 
-// WriteVarInt writes the given Varint to the current response.
-func (r *Response) WriteVarInt(i int32) *Response {
+// WriteVarint writes the given Varint to the current response.
+func (r *Response) WriteVarint(i int32) *Response {
 	_, err := r.data.Write(Varint(i))
 	if err != nil {
 		panic(err)
@@ -105,10 +106,74 @@ func (r *Response) WriteLong(l int64) *Response {
 	return r
 }
 
+// WriteFloat writes the given float to the current response.
+func (r *Response) WriteFloat(f float32) *Response {
+	binary.Write(r.data, ByteOrder, f)
+	return r
+}
+
+// WriteDouble writes the given double to the current response.
+func (r *Response) WriteDouble(d float64) *Response {
+	binary.Write(r.data, ByteOrder, d)
+	return r
+}
+
 // WriteByteArray writes the given byte array to the current response.
 func (r *Response) WriteByteArray(b []byte) *Response {
 	r.WriteUVarint(uint32(len(b)))
 	r.data.Write(b)
+	return r
+}
+
+func (r *Response) WriteArray(arr []interface{}) *Response {
+	if len(arr) == 0 {
+		return r
+	}
+
+	r.WriteUVarint(uint32(len(arr)))
+	for _, elem := range arr {
+		r.WriteObject(elem)
+	}
+
+	return r
+}
+
+// WriteObject explores the field of the given interface, and, if
+// their serialization is supported, writes them to the response;
+// otherwise, tries to explore the field as an interface too--if
+// it fails, skips the field.
+func (r *Response) WriteObject(object interface{}) *Response {
+	switch object.(type) {
+	case int8:
+		r.WriteByte(object.(byte))
+	case uint8:
+		r.WriteUnsignedByte(object.(byte))
+	case bool:
+		r.WriteBoolean(object.(bool))
+	case int:
+		r.WriteInt(object.(int32))
+	case int32:
+		r.WriteVarint(object.(int32))
+	case int64:
+		r.WriteLong(object.(int64))
+	case uint32:
+		r.WriteUVarint(object.(uint32))
+	case float32:
+		r.WriteFloat(object.(float32))
+	case float64:
+		r.WriteDouble(object.(float64))
+	case string:
+		r.WriteString(object.(string))
+	case Chat:
+		r.WriteJSON(object)
+	default:
+		t := reflect.ValueOf(object)
+		if t.CanInterface() {
+			for i := 0; i < t.NumField(); i++ {
+				r.WriteObject(t.Field(i).Interface())
+			}
+		}
+	}
 	return r
 }
 
