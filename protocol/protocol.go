@@ -7,6 +7,10 @@ import (
 	"sync"
 )
 
+const (
+	MaxByteArrayLength = 32767
+)
+
 var (
 	ByteOrder  = binary.BigEndian
 	emptyArray []byte
@@ -98,11 +102,22 @@ func (r *RawPacket) ReadLong() int64 {
 	return long
 }
 
-func (r *RawPacket) ReadByteArray() []byte {
+func (r *RawPacket) ReadByteArrayMax(max uint32) []byte {
 	size := r.ReadUnsignedVarint()
+	if size > max {
+		// TODO: Kick client
+		return []byte{0}
+	}
 	buf := make([]byte, size)
 	r.Data.Read(buf)
-	return buf
+}
+
+func (r *RawPacket) ReadByteArray() []byte {
+	return r.ReadByteArrayMax(MaxByteArrayLength)
+}
+
+func (r *RawPacket) ReadStringMax(max uint32) string {
+	return string(r.ReadByteArrayMax(max))
 }
 
 func (r *RawPacket) ReadString() string {

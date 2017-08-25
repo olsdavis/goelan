@@ -83,7 +83,7 @@ func AssignHandler(conn *Connection) {
 func handshakeHandler(packet *RawPacket, sender *Connection) {
 	sender.ProtocolVersion = packet.ReadUnsignedVarint()
 	// omit the following data, we don't need it
-	packet.ReadString()
+	packet.ReadStringMax(255)
 	packet.ReadUnsignedShort()
 	// end
 	nextState := packet.ReadUnsignedVarint()
@@ -130,7 +130,7 @@ func pingPongHandler(packet *RawPacket, sender *Connection) {
 
 // Handles the login start packet.
 func loginStartHandler(packet *RawPacket, sender *Connection) {
-	username := packet.ReadString()
+	username := packet.ReadStringMax(16)
 	response := NewResponse()
 
 	// old client
@@ -236,7 +236,7 @@ func encryptionResponseHandler(packet *RawPacket, sender *Connection) {
 /*** PLAY HANDLERS ***/
 
 func clientSettingsHandler(packet *RawPacket, sender *Connection) {
-	sender.Player.Settings.Locale = packet.ReadString()
+	sender.Player.Settings.Locale = packet.ReadStringMax(16)
 	sender.Player.Settings.ViewDistance = packet.ReadByte()
 	sender.Player.Settings.ChatMode = player.ChatMode(packet.ReadVarint())
 	sender.Player.Settings.ColorsEnabled = packet.ReadBoolean()
