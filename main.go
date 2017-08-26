@@ -22,7 +22,7 @@ func main() {
 		case <-srv.ExitChan:
 			break
 		case line := <-command.ConsoleChannel:
-			command.ExecuteCommand(line[:len(line)-1]/*remove the \n character*/, command.ConsoleSender)
+			command.ExecuteCommand(line[:len(line)-2]/*remove the \n character*/, command.ConsoleSender)
 		}
 	}
 
