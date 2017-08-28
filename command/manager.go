@@ -42,6 +42,10 @@ func ExecuteCommand(line string, sender CommandSender) {
 		if len(parts) > 1 {
 			args = parts[1:]
 		}
+		if len(args) < handler.MinArgs() {
+			sender.SendMessage(handler.Help())
+			return
+		}
 		handler.Execute(label, args, sender)
 	} else {
 		sender.SendMessage(fmt.Sprintf("Could not find the command \"%v\". Type help to see the full list.", label))

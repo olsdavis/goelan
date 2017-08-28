@@ -54,7 +54,13 @@ func (list *BanList) LoadFile(path string) error {
 
 // SaveFile saves the ban list in the given file.
 func (list *BanList) SaveFile(path string) error {
-	content, err := json.Marshal(list)
+	entries := make([]BanEntry, len(list.players))
+	i := 0
+	for uuid, reason := range list.players {
+		entries[i] = BanEntry{UUID: uuid, Reason: reason}
+		i++
+	}
+	content, err := json.Marshal(entries)
 	if err != nil {
 		return err
 	}
@@ -94,10 +100,12 @@ func (list *BanList) GetPlayers() []string {
 	return ret
 }
 
-// HasPlayer returns true if the list has the given UUID.
-func (list *BanList) HasPlayer(uuid string) bool {
-	if _, ok := list.players[uuid]; ok {
-		return true
+// IsBanned returns true if the given UUID has been banned
+// with the reason of its ban. Otherwise, returns false and
+// an empty string.
+func (list *BanList) IsBanned(uuid string) (bool, string) {
+	if reason, ok := list.players[uuid]; ok {
+		return ok, reason
 	}
-	return false
+	return false, ""
 }

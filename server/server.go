@@ -30,8 +30,9 @@ func Get() *Server {
 }
 
 const (
-	propertiesFile = "server.toml"
+	banListFile    = "banlist.json"
 	faviconFile    = "server-icon.png"
+	propertiesFile = "server.toml"
 )
 
 // Server's properties, read from the properties file ("server.toml").
@@ -52,6 +53,8 @@ type Server struct {
 
 	clients    map[string]*Connection // online players
 	playerLock sync.Mutex             // lock for the clients map
+
+	BanList *player.BanList // contains the players that have been banned from the server
 
 	serverVersion   ServerVersion   // server's version (protocol and name)
 	favicon         string          // the favicon
@@ -185,9 +188,7 @@ func (s *Server) IsRunning() bool {
 	return s.run
 }
 
-/*** THE SERVER ***/
-
-// Initializes the server.
+// Starts initializes the server.
 func (s *Server) Start() {
 	if s.initialized {
 		return
@@ -223,7 +224,7 @@ func (s *Server) Start() {
 	}
 }
 
-// Server logic, ticking, everything.
+// tick handles server's logic.
 func (s *Server) tick() {
 	for s.run {
 		<-s.ticker.C
@@ -231,6 +232,8 @@ func (s *Server) tick() {
 	}
 }
 
+// keepAlive handles the clients that should be kept
+// alive or not.
 func (s *Server) keepAlive() {
 	for s.run {
 		<-s.keepAliveTicker.C
@@ -253,11 +256,25 @@ func (s *Server) keepAlive() {
 	}
 }
 
-// Loads everything the server needs.
-// Apart function from Start() because we may need to reload
-// the server later on.
+// load loads everything the server needs.
+// It is apart from the function from Start()
+// because we may need to reload the server later on.
 func (s *Server) load() {
-	// load favicon
+	s.loadFavicon()
+	s.loadBanList()
+}
+
+// loadBanList loads the players banned from the server.
+func (s *Server) loadBanList() {
+	s.BanList = player.NewBanList()
+	if b, _ := util.Exists(banListFile); b {
+		s.BanList.LoadFile(banListFile)
+	}
+}
+
+// loadFavicon loads server's favicon that appears in the
+// server list.
+func (s *Server) loadFavicon() {
 	if b, _ := util.Exists(faviconFile); b {
 		contents, err := ioutil.ReadFile(faviconFile)
 		if err != nil {
@@ -268,14 +285,15 @@ func (s *Server) load() {
 	}
 }
 
-// Stops the server.
+// Stop stops the server.
 func (s *Server) Stop() {
 	s.run = false
 	s.ticker.Stop()
+	s.BanList.SaveFile(banListFile)
 	close(s.ExitChan)
 }
 
-// Handles a new connection.
+// handleConnection handles new connections.
 func (s *Server) handleConnection(conn net.Conn) {
 	c := NewConnection(conn, s)
 	AssignHandler(c)
@@ -309,24 +327,27 @@ func (s *Server) handleConnection(conn net.Conn) {
 	}
 }
 
-// Returns true if the given user can connect to the server.
-// Otherwise, returns false and the reason why the player
-// cannot connect.
+// CanConnect returns true if the given user can connect to
+// the server. Otherwise, returns false and the reason why
+// the player cannot connect.
 func (s *Server) CanConnect(username, uuid string) (bool, string) {
 	if !util.IsValidUsername(username) {
 		return false, "Your username is invalid."
 	}
 
-	// TODO: check if banned
+	if banned, reason := s.BanList.IsBanned(uuid); banned {
+		return false, reason
+	}
 
-	if ok, _ := s.GetPlayerByName(username); ok {
+	if ok, _ := s.GetPlayerByUUID(uuid); ok {
 		return false, "You already logged in with this account."
 	}
 
 	return true, ""
 }
 
-// Creates the player from the given connection, adds the player to the clients' map, etc.
+// FinishLogin handles the end of player's connection to
+// the server.
 func (s *Server) FinishLogin(profile player.PlayerProfile, connection *Connection) {
 	// TODO: Load permissions
 	pl := player.Player{
@@ -399,12 +420,12 @@ func (s *Server) GetAllPlayers() []*player.Player {
 
 // GetPlayerByName returns true if the player associated to the given username has been found
 // with the player in himself. Otherwise returns false and nil.
-func (s *Server) GetPlayerByName(username string) (bool, *player.Player) {
+func (s *Server) GetPlayerByName(username string) (bool, *Connection) {
 	defer s.playerLock.Unlock()
 	s.playerLock.Lock()
 	for _, conn := range s.clients {
 		if conn.Player.Name == username {
-			return true, conn.Player
+			return true, conn
 		}
 	}
 	return false, nil
@@ -412,12 +433,12 @@ func (s *Server) GetPlayerByName(username string) (bool, *player.Player) {
 
 // GetPlayerByUUID returns true if the player associated to the given UUID has been found
 // with the player himself. Otherwise returns false and nil.
-func (s *Server) GetPlayerByUUID(uuid string) (bool, *player.Player) {
+func (s *Server) GetPlayerByUUID(uuid string) (bool, *Connection) {
 	defer s.playerLock.Unlock()
 	s.playerLock.Lock()
 	conn, ok := s.clients[uuid]
 	if ok {
-		return ok, conn.Player
+		return ok, conn
 	} else {
 		return ok, nil
 	}
