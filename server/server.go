@@ -357,7 +357,7 @@ func (s *Server) FinishLogin(profile player.PlayerProfile, connection *Connectio
 		Profile:     profile,
 		Settings:    &player.ClientSettings{},
 		Location: &world.Location{
-			SimpleLocation: world.SimpleLocation{
+			Location3f: world.Location3f{
 				X: 0,
 				Y: 80,
 				Z: 0,

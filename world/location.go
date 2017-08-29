@@ -11,18 +11,40 @@ type Orientation struct {
 	Pitch float32
 }
 
-// Used for blocks
-type SimpleLocation struct {
+type Location3f struct {
 	X     float32
 	Y     float32
 	Z     float32
 	World *World
 }
 
+// Location3i is used for blocks.
+type Location3i struct {
+	X     int32
+	Y     int32
+	Z     int32
+	World *World
+}
+
 // Used for entities
 type Location struct {
 	Orientation
-	SimpleLocation
+	Location3f
+}
+
+// NewLocation3i creates a new Location3i and returns its pointer.
+// Panics if the world is nil.
+func NewLocation3i(x, y, z int32, world *World) *Location3i {
+	if world == nil {
+		panic("world cannot be nil")
+	}
+
+	return &Location3i{
+		X: x,
+		Y: y,
+		Z: z,
+		World: world,
+	}
 }
 
 // Creates a new location with the given (x,y,z) coordinates, world
@@ -38,15 +60,15 @@ func NewFullLocation(yaw, pitch, x, y, z float32, world *World) *Location {
 	return &Location{Orientation{yaw, pitch}, NewSimpleLocation(x, y, z, world)}
 }
 
-// Creates a SimpleLocation with the given (x,y,z) coordinates and the world.
-// In contrast with the Location type, the SimpleLocation has not got an orientation.
+// Creates a Location3f with the given (x,y,z) coordinates and the world.
+// In contrast with the Location type, the Location3f has not got an orientation.
 // Panics if the world is nil.
-func NewSimpleLocation(x, y, z float32, world *World) SimpleLocation {
+func NewSimpleLocation(x, y, z float32, world *World) Location3f {
 	if world == nil {
 		panic("world cannot be nil")
 	}
 
-	return SimpleLocation{x, y, z, world}
+	return Location3f{x, y, z, world}
 }
 
 // Calculates the squared distance between the two locations.

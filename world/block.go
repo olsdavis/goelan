@@ -6,12 +6,20 @@ import (
 )
 
 type Block struct {
-	location   SimpleLocation
+	location   *Location3i
 	material   material.Material
 	BlockState byte
 }
 
-func (b *Block) GetLocation() SimpleLocation {
+func NewBlock(loc *Location3i, mat material.Material, state byte) *Block {
+	return &Block{
+		location:   loc,
+		material:   mat,
+		BlockState: state,
+	}
+}
+
+func (b *Block) GetLocation() *Location3i {
 	return b.location
 }
 

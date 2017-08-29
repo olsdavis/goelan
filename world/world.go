@@ -1,16 +1,14 @@
 package world
 
-const (
-	ChunkSize = 16 // 16^3
-)
+import "github.com/olsdavis/goelan/world/val"
 
 type Chunk struct {
-	blocks [][][]*Block
+	Blocks [][][]*Block
 }
 
 func NewChunk() *Chunk {
 	return &Chunk{
-		make([][][]*Block, ChunkSize),
+		Blocks: make([][][]*Block, val.ChunkSize),
 	}
 }
 
@@ -22,5 +20,6 @@ type World struct {
 func NewWorld(name string) *World {
 	return &World{
 		Name: name,
+		Chunks: make([][][]Chunk, 16),
 	}
 }
