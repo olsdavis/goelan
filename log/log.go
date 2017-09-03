@@ -11,21 +11,13 @@ Maybe one day I will make one; I will keep you up to date.
 
 import (
 	"fmt"
-	"io"
-	"log"
-	"os"
 	"time"
-
-	"github.com/olsdavis/goelan/util"
+	"github.com/olsdavis/justlog"
 )
 
 var (
 	initialized = false
-	DebugLogger *log.Logger
-	InfoLogger  *log.Logger
-	WarnLogger  *log.Logger
-	ErrorLogger *log.Logger
-	FatalLogger *log.Logger
+	Logger justlog.Logger
 )
 
 // Initializes the logger.
@@ -34,53 +26,35 @@ func Init() {
 		return
 	}
 
-	logFileName := fmt.Sprintf("logs/%v_Server.log", time.Now().Format("2006-01-02-_15-04-05"))
-
-	if val, _ := util.Exists("logs/"); !val {
-		os.Mkdir("logs", os.ModePerm)
-	}
-
-	if val, _ := util.Exists(logFileName); !val {
-		os.Create(logFileName)
-	}
-
-	file, err := os.OpenFile(logFileName, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Could not create log file:", err)
-	}
-
-	writer := io.MultiWriter(file, os.Stdout)
-	DebugLogger = log.New(os.Stdout, "[DEBU] ", log.Ltime)
-	InfoLogger = log.New(writer, "[INFO] ", log.Ltime)
-	WarnLogger = log.New(writer, "[WARN] ", log.Ltime)
-	ErrorLogger = log.New(writer, "[ERRO] ", log.Ltime)
-	FatalLogger = log.New(writer, "[FATA] ", log.Ltime)
+	justlog.NewWithHandlers(justlog.NewConsoleHandler(justlog.AllLevels...),
+		justlog.NewFileHandler(fmt.Sprintf("logs/%v_Server.log", time.Now().Format("2006-01-02-_15-04-05")),
+			justlog.ErrorLevel, justlog.FatalLevel, justlog.WarnLevel, justlog.InfoLevel))
+	Logger.SetFormatters(justlog.NewFormatter("[%{LEVEL}] [%{TIME}]: %{MESSAGE}", justlog.AllLevels...))
 
 	initialized = true
 }
 
 // Debug prints a debug message to the debugging logger.
 func Debug(message ...interface{}) {
-	DebugLogger.Println(message)
+	Logger.Debug(message)
 }
 
 // Info prints an info message to the info logger.
 func Info(message ...interface{}) {
-	InfoLogger.Println(message)
+	Logger.Info(message)
 }
 
 // Warn prints a warning message to the warning logger.
 func Warn(message ...interface{}) {
-	WarnLogger.Println(message)
+	Logger.Warn(message)
 }
 
 // Error prints an error message to the error logger.
 func Error(message ...interface{}) {
-	ErrorLogger.Println(message)
+	Logger.Error(message)
 }
 
 // Fatal prints a fatal message to the fatal logger.
 func Fatal(message ...interface{}) {
-	FatalLogger.Println(message)
+	Logger.Fatal(message)
 }
