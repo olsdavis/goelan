@@ -151,7 +151,7 @@ const (
 	ClientSettingsPacketId        = 0x04
 	AnimationPacketId             = 0x06
 	PluginMessagePacketId         = 0x09
-	ChatPacketId                  = 0x10
+	OutgoingChatPacketId          = 0x10
 	KeepAliveIncomingPacketId     = 0x0B
 	KickPlayerPacketId            = 0x1A
 	KeepAliveOutgoingPacketId     = 0x1F

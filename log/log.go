@@ -1,14 +1,5 @@
 package log
 
-/*
-
-Because nobody has been able to develop a proper library for logging in Go up until
-the moment I was writing this comment (20:21 02/21/2017), I had to write the following
-code, which is quite awful - it's true; it works though.
-Maybe one day I will make one; I will keep you up to date.
-
-*/
-
 import (
 	"fmt"
 	"time"
@@ -17,7 +8,7 @@ import (
 
 var (
 	initialized = false
-	Logger justlog.Logger
+	Logger *justlog.Logger
 )
 
 // Initializes the logger.
@@ -26,7 +17,7 @@ func Init() {
 		return
 	}
 
-	justlog.NewWithHandlers(justlog.NewConsoleHandler(justlog.AllLevels...),
+	Logger = justlog.NewWithHandlers(justlog.NewConsoleHandler(justlog.AllLevels...),
 		justlog.NewFileHandler(fmt.Sprintf("logs/%v_Server.log", time.Now().Format("2006-01-02-_15-04-05")),
 			justlog.ErrorLevel, justlog.FatalLevel, justlog.WarnLevel, justlog.InfoLevel))
 	Logger.SetFormatters(justlog.NewFormatter("[%{LEVEL}] [%{TIME}]: %{MESSAGE}", justlog.AllLevels...))

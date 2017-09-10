@@ -139,7 +139,7 @@ func (c *Connection) write() {
 				continue
 			}
 
-			if packet.ID == protocol.ChatPacketId {
+			if packet.ID == protocol.OutgoingChatPacketId {
 				log.Debug(packet.Data.Buf)
 			}
 
@@ -194,7 +194,7 @@ func (c *Connection) SendMessage(message string, mode protocol.MessageMode) {
 	response := protocol.NewResponse()
 	response.WriteChat(message)
 	response.WriteByte(byte(mode))
-	c.Write(response.ToRawPacket(protocol.ChatPacketId))
+	c.Write(response.ToRawPacket(protocol.OutgoingChatPacketId))
 }
 
 // Disconnects the current client for the given reason. (May be empty.)

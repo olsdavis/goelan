@@ -16,9 +16,9 @@ func (generator FlatGenerator) GenerateChunkColumn(x, z int, w *world.World) *wo
 		case 0:
 			mat = material.Bedrock
 		case 1:
-			mat = material.Dirt
-		case 2:
 			fallthrough
+		case 2:
+			mat = material.Dirt
 		case 3:
 			mat = material.Grass
 		}
