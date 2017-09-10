@@ -6,13 +6,14 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"crypto/rsa"
+	"encoding/json"
 	"fmt"
 	"github.com/olsdavis/goelan/auth"
 	"github.com/olsdavis/goelan/encrypt"
 	"github.com/olsdavis/goelan/log"
+	"github.com/olsdavis/goelan/player"
 	. "github.com/olsdavis/goelan/protocol"
 	"github.com/olsdavis/goelan/util"
-	"github.com/olsdavis/goelan/player"
 )
 
 type PacketHandler func(packet *RawPacket, sender *Connection)
@@ -224,12 +225,12 @@ func encryptionResponseHandler(packet *RawPacket, sender *Connection) {
 	response.Clear()
 	// Join Game packet
 	response.WriteInt(0). // entity id
-		WriteUnsignedByte(1). // gamemode
-		WriteInt(0). // dimension
-		WriteUnsignedByte(0). // difficulty
-		WriteUnsignedByte(0). // max players (ignored)
-		WriteString("default"). // level type
-		WriteBoolean(false) // reduced debug info
+				WriteUnsignedByte(1).   // gamemode
+				WriteInt(0).            // dimension
+				WriteUnsignedByte(0).   // difficulty
+				WriteUnsignedByte(0).   // max players (ignored)
+				WriteString("default"). // level type
+				WriteBoolean(false)     // reduced debug info
 	sender.Write(response.ToRawPacket(JoinGamePacketId))
 	response.Clear()
 	sender.GetServer().FinishLogin(*profile, sender)
@@ -261,7 +262,20 @@ func keepAliveHandler(packet *RawPacket, sender *Connection) {
 	}
 }
 
+type ChatComponent struct {
+	Text string `json:"text"`
+}
+
 func chatMessageHandler(packet *RawPacket, sender *Connection) {
 	message := packet.ReadString()
 	log.Debug(sender.Player.Name, "says", message)
+
+	chatContent, err := json.Marshal(ChatComponent{Text: fmt.Sprintf("%s: %s", sender.Player.Name, message)})
+	if err != nil {
+		panic(err)
+	}
+
+	response := NewResponse()
+	response.WriteString(string(chatContent)).WriteUnsignedByte(0)
+	sender.Write(response.ToRawPacket(0x0F))
 }
