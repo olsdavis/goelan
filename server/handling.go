@@ -10,9 +10,9 @@ import (
 	"github.com/olsdavis/goelan/auth"
 	"github.com/olsdavis/goelan/encrypt"
 	"github.com/olsdavis/goelan/log"
+	"github.com/olsdavis/goelan/player"
 	. "github.com/olsdavis/goelan/protocol"
 	"github.com/olsdavis/goelan/util"
-	"github.com/olsdavis/goelan/player"
 )
 
 type PacketHandler func(packet *RawPacket, sender *Connection)
@@ -100,7 +100,7 @@ func handshakeHandler(packet *RawPacket, sender *Connection) {
 			Ver: Version{Name: version.Name, Protocol: version.ProtocolVersion},
 			Pl: Players{Max: sender.GetServer().GetMaxPlayers(),
 				Online: sender.GetServer().GetOnlinePlayersCount()},
-			Desc: Chat{Text: sender.GetServer().GetMotd()},
+			Desc: ChatComponent{Text: sender.GetServer().GetMotd()},
 			Fav:  "",
 		}
 		if sender.GetServer().HasFavicon() {
@@ -224,12 +224,12 @@ func encryptionResponseHandler(packet *RawPacket, sender *Connection) {
 	response.Clear()
 	// Join Game packet
 	response.WriteInt(0). // entity id
-		WriteUnsignedByte(1). // gamemode
-		WriteInt(0). // dimension
-		WriteUnsignedByte(0). // difficulty
-		WriteUnsignedByte(0). // max players (ignored)
-		WriteString("default"). // level type
-		WriteBoolean(false) // reduced debug info
+				WriteUnsignedByte(1).   // gamemode
+				WriteInt(0).            // dimension
+				WriteUnsignedByte(0).   // difficulty
+				WriteUnsignedByte(0).   // max players (ignored)
+				WriteString("default"). // level type
+				WriteBoolean(false)     // reduced debug info
 	sender.Write(response.ToRawPacket(JoinGamePacketId))
 	response.Clear()
 	sender.GetServer().FinishLogin(*profile, sender)
@@ -264,4 +264,8 @@ func keepAliveHandler(packet *RawPacket, sender *Connection) {
 func chatMessageHandler(packet *RawPacket, sender *Connection) {
 	message := packet.ReadString()
 	log.Debug(sender.Player.Name, "says", message)
+
+	response := NewResponse()
+	response.WriteJSON(ChatComponent{Text: fmt.Sprintf("%s: %s", sender.Player.Name, message)}).WriteUnsignedByte(0)
+	sender.Write(response.ToRawPacket(0x0F))
 }
