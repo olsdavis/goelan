@@ -84,11 +84,11 @@ func NewConnection(socket net.Conn, server *Server) *Connection {
 		VerifyToken:     emptyArray,
 		VerifyUsername:  "",
 		Player:          nil,
-		LastKeepAlive:   KeepAliveData{
+		LastKeepAlive: KeepAliveData{
 			ID: -1,
 		},
-		connected:       true,
-		Mutex:           sync.Mutex{},
+		connected: true,
+		Mutex:     sync.Mutex{},
 	}
 }
 
@@ -192,7 +192,7 @@ func (c *Connection) SetConnected(b bool) {
 // - ActionBarMode (mode 2): if you want to send messages above the hotbar, use this mode.
 func (c *Connection) SendMessage(message string, mode protocol.MessageMode) {
 	response := protocol.NewResponse()
-	response.WriteChat(message)
+	response.WriteJSON(protocol.ChatComponent{Text: message})
 	response.WriteByte(byte(mode))
 	c.Write(response.ToRawPacket(protocol.OutgoingChatPacketId))
 }
@@ -214,7 +214,7 @@ func (c *Connection) Disconnect(reason string) {
 		}
 
 		response := protocol.NewResponse()
-		response.WriteChat(reason)
+		response.WriteJSON(protocol.ChatComponent{Text: reason})
 		rp := response.ToRawPacket(packetId)
 		// waits the packet to be send; it prevents us from writing messages
 		// while the socket is being closed

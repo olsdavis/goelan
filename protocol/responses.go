@@ -11,10 +11,10 @@ import (
 
 // Represents server list ping response.
 type ServerListPing struct {
-	Ver  Version `json:"version"`
-	Pl   Players `json:"players"`
-	Desc Chat    `json:"description"`
-	Fav  string  `json:"favicon,omitempty"`
+	Ver  Version       `json:"version"`
+	Pl   Players       `json:"players"`
+	Desc ChatComponent `json:"description"`
+	Fav  string        `json:"favicon,omitempty"`
 }
 
 type Version struct {
@@ -27,7 +27,7 @@ type Players struct {
 	Online uint `json:"online"`
 }
 
-type Chat struct {
+type ChatComponent struct {
 	Text string `json:"text"`
 }
 
@@ -47,11 +47,6 @@ func (r *Response) WriteBoolean(b bool) *Response {
 	} else {
 		return r.WriteByte(0)
 	}
-}
-
-// WriteChat writes a Chat JSON Object to the current response.
-func (r *Response) WriteChat(obj string) *Response {
-	return r.WriteJSON(Chat{obj})
 }
 
 // WriteJSON writes the given interface as a JSON string to the current response.
@@ -164,8 +159,6 @@ func (r *Response) WriteObject(object interface{}) *Response {
 		r.WriteDouble(object.(float64))
 	case string:
 		r.WriteString(object.(string))
-	case Chat:
-		r.WriteJSON(object)
 	default:
 		t := reflect.ValueOf(object)
 		if t.CanInterface() {

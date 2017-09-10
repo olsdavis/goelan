@@ -6,7 +6,6 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"crypto/rsa"
-	"encoding/json"
 	"fmt"
 	"github.com/olsdavis/goelan/auth"
 	"github.com/olsdavis/goelan/encrypt"
@@ -101,7 +100,7 @@ func handshakeHandler(packet *RawPacket, sender *Connection) {
 			Ver: Version{Name: version.Name, Protocol: version.ProtocolVersion},
 			Pl: Players{Max: sender.GetServer().GetMaxPlayers(),
 				Online: sender.GetServer().GetOnlinePlayersCount()},
-			Desc: Chat{Text: sender.GetServer().GetMotd()},
+			Desc: ChatComponent{Text: sender.GetServer().GetMotd()},
 			Fav:  "",
 		}
 		if sender.GetServer().HasFavicon() {
@@ -262,20 +261,11 @@ func keepAliveHandler(packet *RawPacket, sender *Connection) {
 	}
 }
 
-type ChatComponent struct {
-	Text string `json:"text"`
-}
-
 func chatMessageHandler(packet *RawPacket, sender *Connection) {
 	message := packet.ReadString()
 	log.Debug(sender.Player.Name, "says", message)
 
-	chatContent, err := json.Marshal(ChatComponent{Text: fmt.Sprintf("%s: %s", sender.Player.Name, message)})
-	if err != nil {
-		panic(err)
-	}
-
 	response := NewResponse()
-	response.WriteString(string(chatContent)).WriteUnsignedByte(0)
+	response.WriteJSON(ChatComponent{Text: fmt.Sprintf("%s: %s", sender.Player.Name, message)}).WriteUnsignedByte(0)
 	sender.Write(response.ToRawPacket(0x0F))
 }
