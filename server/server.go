@@ -302,9 +302,7 @@ func (s *Server) handleConnection(conn net.Conn) {
 		read, err := c.Next()
 
 		if err != nil {
-			if err != io.EOF {
-				log.Error("Encountered an exception during read:", err)
-			}
+			// just exit
 			break
 		}
 
@@ -321,7 +319,7 @@ func (s *Server) handleConnection(conn net.Conn) {
 		s.playerLock.Unlock()
 
 		// broadcast
-		message := fmt.Sprintf("%v has left the server.", c.Player.Name)
+		message := c.Player.Name + " has left the server."
 		s.BroadcastMessage(message, protocol.DefaultMessageMode)
 		log.Info(message)
 	}
@@ -392,9 +390,9 @@ func (s *Server) FinishLogin(profile player.PlayerProfile, connection *Connectio
 	// broadcast player list item
 
 	// announce login in chat and logs
-	//message := fmt.Sprintf("%v has joined the server.", profile.Name)
-	//log.Info(message)
-	//s.BroadcastMessage(message, protocol.DefaultMessageMode)
+	message := profile.Name + " has joined the server."
+	log.Info(message)
+	s.BroadcastMessage(message, protocol.DefaultMessageMode)
 }
 
 // GetOnlinePlayersCount returns the online players count.
