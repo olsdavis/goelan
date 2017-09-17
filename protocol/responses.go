@@ -49,16 +49,6 @@ func (r *Response) WriteBoolean(b bool) *Response {
 	}
 }
 
-// WriteJSON writes the given interface as a JSON string to the current response.
-// (Currently ignores failure.)
-func (r *Response) WriteJSON(obj interface{}) *Response {
-	j, err := json.Marshal(obj)
-	if err != nil {
-		panic(err)
-	}
-	return r.WriteByteArray(j)
-}
-
 // WriteByte writes the given byte to the current response.
 func (r *Response) WriteByte(b byte) *Response {
 	r.data.Write([]byte{b})
@@ -120,6 +110,8 @@ func (r *Response) WriteByteArray(b []byte) *Response {
 	return r
 }
 
+// WriteArray writes the length of the given array followed by each of
+// its components. Ignored if array's length is equal to 0.
 func (r *Response) WriteArray(arr []interface{}) *Response {
 	if len(arr) == 0 {
 		return r
@@ -131,6 +123,16 @@ func (r *Response) WriteArray(arr []interface{}) *Response {
 	}
 
 	return r
+}
+
+// WriteJSON writes the given interface as a JSON string to the current response.
+// (Currently ignores failure.)
+func (r *Response) WriteJSON(obj interface{}) *Response {
+	j, err := json.Marshal(obj)
+	if err != nil {
+		panic(err)
+	}
+	return r.WriteByteArray(j)
 }
 
 // WriteObject explores the field of the given interface, and, if

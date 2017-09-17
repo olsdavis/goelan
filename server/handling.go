@@ -262,10 +262,7 @@ func keepAliveHandler(packet *RawPacket, sender *Connection) {
 }
 
 func chatMessageHandler(packet *RawPacket, sender *Connection) {
-	message := packet.ReadString()
-	log.Debug(sender.Player.Name, "says", message)
-
-	response := NewResponse()
-	response.WriteJSON(ChatComponent{Text: fmt.Sprintf("%s: %s", sender.Player.Name, message)}).WriteUnsignedByte(0)
-	sender.Write(response.ToRawPacket(0x0F))
+	message := sender.Player.Name + " > " + packet.ReadString()
+	log.Info(sender.Player.Name, message)
+	sender.SendMessage(message, ChatMessageMode)
 }

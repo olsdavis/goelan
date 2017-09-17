@@ -139,10 +139,6 @@ func (c *Connection) write() {
 				continue
 			}
 
-			if packet.ID == protocol.OutgoingChatPacketId {
-				log.Debug(packet.Data.Buf)
-			}
-
 			_, err := c.Writer.Write(toByteArray(packet))
 
 			// omit this error
@@ -193,7 +189,7 @@ func (c *Connection) SetConnected(b bool) {
 func (c *Connection) SendMessage(message string, mode protocol.MessageMode) {
 	response := protocol.NewResponse()
 	response.WriteJSON(protocol.ChatComponent{Text: message})
-	response.WriteByte(byte(mode))
+	response.WriteUnsignedByte(byte(mode))
 	c.Write(response.ToRawPacket(protocol.OutgoingChatPacketId))
 }
 
