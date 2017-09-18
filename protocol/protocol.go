@@ -93,6 +93,15 @@ func (r *RawPacket) ReadUnsignedVarint() uint32 {
 	return uint32(i)
 }
 
+func (r *RawPacket) ReadFloat() float32 {
+	var float float32
+	err := binary.Read(r.Data, ByteOrder, &float)
+	if err != nil {
+		log.Error("Could not read float:", err)
+	}
+	return float
+}
+
 func (r *RawPacket) ReadLong() int64 {
 	var long int64
 	err := binary.Read(r.Data, ByteOrder, &long)
