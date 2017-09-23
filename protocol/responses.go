@@ -80,8 +80,8 @@ func (r *Response) WriteVarint(i int32) *Response {
 }
 
 // WriteInt writes the given integer to the current response.
-func (r *Response) WriteInt(i int32) *Response {
-	binary.Write(r.data, ByteOrder, i)
+func (r *Response) WriteInt(i int) *Response {
+	binary.Write(r.data, ByteOrder, int32(i))
 	return r
 }
 
@@ -148,7 +148,7 @@ func (r *Response) WriteStructure(object interface{}) *Response {
 	case bool:
 		r.WriteBoolean(object.(bool))
 	case int:
-		r.WriteInt(object.(int32))
+		r.WriteInt(object.(int))
 	case int32:
 		r.WriteVarint(object.(int32))
 	case int64:
@@ -161,6 +161,8 @@ func (r *Response) WriteStructure(object interface{}) *Response {
 		r.WriteDouble(object.(float64))
 	case string:
 		r.WriteString(object.(string))
+	case []byte:
+		r.WriteByteArray(object.([]byte))
 	default:
 		t := reflect.ValueOf(object)
 		if t.CanInterface() {

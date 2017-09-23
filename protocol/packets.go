@@ -4,6 +4,8 @@
 package protocol
 
 type (
+	JsonString interface {}
+
 	PositionAndLookPacket struct {
 		X          float64
 		Y          float64

@@ -89,9 +89,7 @@ func handshakeHandler(packet *RawPacket, sender *Connection) {
 	packet.ReadUnsignedShort()
 	// end
 	nextState := packet.ReadUnsignedVarint()
-
 	switch nextState {
-
 	// Status (server list)
 	case HandshakeStatusNextState:
 		response := NewResponse()
@@ -108,12 +106,10 @@ func handshakeHandler(packet *RawPacket, sender *Connection) {
 		}
 		response.WriteJSON(list)
 		sender.Write(response.ToRawPacket(HandshakePacketId))
-
 		// Login (wants to play)
 	case HandshakeLoginNextState:
 		sender.ConnectionState = LoginState
 		AssignHandler(sender)
-
 		// Unknown
 	default:
 		log.Error("Client handshake next state:", nextState)
@@ -149,9 +145,17 @@ func loginStartHandler(packet *RawPacket, sender *Connection) {
 		token := encrypt.GenerateVerifyToken()
 		publicKey := sender.GetServer().GetPublicKey()
 
-		response.WriteString("")
-		response.WriteByteArray(publicKey)
-		response.WriteByteArray(token)
+		var encryptionRequest = struct {
+			ServerID    string
+			PublicKey   []byte
+			VerifyToken []byte
+		}{
+			"",
+			publicKey,
+			token,
+		}
+
+		response.WriteStructure(encryptionRequest)
 		sender.Write(response.ToRawPacket(EncryptionRequestPacketId))
 		sender.VerifyToken = token
 		sender.VerifyUsername = username
@@ -169,31 +173,23 @@ func encryptionResponseHandler(packet *RawPacket, sender *Connection) {
 	if err != nil {
 		panic(err)
 	}
-
 	if !bytes.Equal(verifyToken, sender.VerifyToken) {
 		sender.Disconnect("Invalid verify token.")
 		return
 	}
-
-	// assign new readers and writers
 	aesCipher, err := aes.NewCipher(sharedSecret)
 	if err != nil {
 		panic(err)
 	}
-
 	sender.Writer = cipher.StreamWriter{
 		W: sender.Writer,
 		S: encrypt.NewCFB8Encrypt(aesCipher, sharedSecret),
 	}
-
 	reader := cipher.StreamReader{
 		R: sender.Reader.R,
 		S: encrypt.NewCFB8Decrypt(aesCipher, sharedSecret),
 	}
-
 	sender.Reader.R = reader
-	// end
-
 	// auth
 	profile, err := auth.Auth(sender.VerifyUsername, sharedSecret, sender.GetServer().GetPublicKey())
 	if err != nil {
@@ -201,36 +197,48 @@ func encryptionResponseHandler(packet *RawPacket, sender *Connection) {
 		log.Error("Error while connecting to Mojang servers:", err)
 		return
 	}
-
 	// Login Success packet
 	response := NewResponse()
-	response.WriteString(util.ToHypenUUID(profile.UUID))
-	response.WriteString(profile.Name)
+	var loginSuccess = struct {
+		UUID string
+		Name string
+	}{
+		util.ToHypenUUID(profile.UUID),
+		profile.Name,
+	}
+	response.WriteStructure(loginSuccess)
 	sender.Write(response.ToRawPacket(LoginSuccessPacketId))
-
 	sender.SharedSecret = sharedSecret
 	// release the data we don't need anymore
 	sender.VerifyToken = emptyArray
 	sender.VerifyUsername = ""
-
 	if ok, reason := sender.GetServer().CanConnect(profile.Name, profile.UUID); !ok {
 		sender.Disconnect(reason)
 		return
 	}
-
 	// New connection state
 	sender.ConnectionState = PlayState
 	AssignHandler(sender)
 	response.Clear()
 	// Join Game packet
-	response.WriteInt(0). // entity id
-				WriteUnsignedByte(1).   // gamemode
-				WriteInt(0).            // dimension
-				WriteUnsignedByte(0).   // difficulty
-				WriteUnsignedByte(0).   // max players (ignored)
-				WriteString("default"). // level type
-				WriteBoolean(false)     // reduced debug info
-	sender.Write(response.ToRawPacket(JoinGamePacketId))
+	var joinGame = struct {
+		EntityId         int
+		Gamemode         uint8
+		Dimension        int
+		Difficulty       uint8
+		MaxPlayers       uint8
+		LevelType        string
+		ReducedDebugInfo bool
+	}{
+		0,
+		0,
+		0,
+		0,
+		0,
+		"default",
+		false,
+	}
+	sender.Write(response.WriteStructure(joinGame).ToRawPacket(JoinGamePacketId))
 	response.Clear()
 	sender.GetServer().FinishLogin(*profile, sender)
 }
