@@ -47,7 +47,7 @@ func (reader FullReader) Read(p []byte) (int, error) {
 
 type KeepAliveData struct {
 	Deadline time.Time
-	ID       int32
+	ID       int64
 }
 
 type Connection struct {

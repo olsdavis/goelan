@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/olsdavis/goelan/log"
 	"sync"
+	"math"
 )
 
 const (
@@ -94,12 +95,15 @@ func (r *RawPacket) ReadUnsignedVarint() uint32 {
 }
 
 func (r *RawPacket) ReadFloat() float32 {
-	var float float32
-	err := binary.Read(r.Data, ByteOrder, &float)
-	if err != nil {
-		log.Error("Could not read float:", err)
-	}
-	return float
+	buf := make([]byte, 4)
+	r.Data.Read(buf)
+	return math.Float32frombits(ByteOrder.Uint32(buf))
+}
+
+func (r *RawPacket) ReadDouble() float64 {
+	buf := make([]byte, 8)
+	r.Data.Read(buf)
+	return math.Float64frombits(ByteOrder.Uint64(buf))
 }
 
 func (r *RawPacket) ReadLong() int64 {

@@ -253,7 +253,7 @@ func pluginMessageHandler(packet *RawPacket, sender *Connection) {
 }
 
 func keepAliveHandler(packet *RawPacket, sender *Connection) {
-	id := packet.ReadVarint()
+	id := packet.ReadLong()
 	if sender.LastKeepAlive.ID == id {
 		sender.Lock()
 		sender.LastKeepAlive.ID = -1

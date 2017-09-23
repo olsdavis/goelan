@@ -50,8 +50,8 @@ func (r *Response) WriteBoolean(b bool) *Response {
 }
 
 // WriteByte writes the given byte to the current response.
-func (r *Response) WriteByte(b byte) *Response {
-	r.data.Write([]byte{b})
+func (r *Response) WriteByte(b int8) *Response {
+	r.data.Write([]byte{byte(b)})
 	return r
 }
 
@@ -119,7 +119,7 @@ func (r *Response) WriteArray(arr []interface{}) *Response {
 
 	r.WriteUVarint(uint32(len(arr)))
 	for _, elem := range arr {
-		r.WriteObject(elem)
+		r.WriteStructure(elem)
 	}
 
 	return r
@@ -135,14 +135,14 @@ func (r *Response) WriteJSON(obj interface{}) *Response {
 	return r.WriteByteArray(j)
 }
 
-// WriteObject explores the field of the given interface, and, if
+// WriteStructure explores the field of the given interface, and, if
 // their serialization is supported, writes them to the response;
 // otherwise, tries to explore the field as an interface too--if
 // it fails, skips the field.
-func (r *Response) WriteObject(object interface{}) *Response {
+func (r *Response) WriteStructure(object interface{}) *Response {
 	switch object.(type) {
 	case int8:
-		r.WriteByte(object.(byte))
+		r.WriteByte(object.(int8))
 	case uint8:
 		r.WriteUnsignedByte(object.(byte))
 	case bool:
@@ -165,7 +165,7 @@ func (r *Response) WriteObject(object interface{}) *Response {
 		t := reflect.ValueOf(object)
 		if t.CanInterface() {
 			for i := 0; i < t.NumField(); i++ {
-				r.WriteObject(t.Field(i).Interface())
+				r.WriteStructure(t.Field(i).Interface())
 			}
 		}
 	}

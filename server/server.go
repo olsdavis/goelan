@@ -10,7 +10,6 @@ import (
 	"github.com/olsdavis/goelan/player"
 	"github.com/olsdavis/goelan/protocol"
 	"github.com/olsdavis/goelan/util"
-	"io"
 	"io/ioutil"
 	"net"
 	"os"
@@ -79,7 +78,7 @@ func CreateServer(properties ServerProperties) *Server {
 		properties:      properties,
 		clients:         make(map[string]*Connection),
 		playerLock:      sync.Mutex{},
-		serverVersion:   ServerVersion{"1.12.1", 338},
+		serverVersion:   ServerVersion{"1.12.2", 340},
 		favicon:         "",
 		ticker:          nil,
 		keepAliveTicker: nil,
@@ -238,8 +237,8 @@ func (s *Server) keepAlive() {
 	for s.run {
 		<-s.keepAliveTicker.C
 
-		id := int32(rand.Intn(0xFFFE))
-		packet := protocol.NewResponse().WriteVarint(id).ToRawPacket(protocol.KeepAliveOutgoingPacketId)
+		id := int64(rand.Intn(0xFFFE))
+		packet := protocol.NewResponse().WriteLong(id).ToRawPacket(protocol.KeepAliveOutgoingPacketId)
 		s.ForEachPlayerSync(func(c *Connection) {
 			c.Lock()
 			if c.LastKeepAlive.ID == -1 {
@@ -372,19 +371,23 @@ func (s *Server) FinishLogin(profile player.PlayerProfile, connection *Connectio
 	s.playerLock.Unlock()
 	packet := protocol.NewResponse()
 	// send position and look packet
-	packet.WriteDouble(float64(pl.Location.X)).
-		WriteDouble(float64(pl.Location.Y)).
-		WriteDouble(float64(pl.Location.Z))
-	packet.WriteFloat(pl.Location.Yaw)
-	packet.WriteFloat(pl.Location.Pitch)
-	packet.WriteByte(0)
-	packet.WriteVarint(int32(rand.Intn(0xFFFE)))
+	packet.WriteStructure(protocol.PositionAndLookPacket{
+		X:          float64(pl.Location.X),
+		Y:          float64(pl.Location.Y),
+		Z:          float64(pl.Location.Z),
+		Yaw:        pl.Location.Yaw,
+		Pitch:      pl.Location.Pitch,
+		Flags:      0,
+		TeleportID: int32(rand.Intn(0xFFFE)),
+	})
 	connection.Write(packet.ToRawPacket(protocol.PlayerPositionAndLookPacketId))
 	packet.Clear()
 	// send abilities packet
-	packet.WriteByte(0)
-	packet.WriteFloat(1)
-	packet.WriteFloat(1)
+	packet.WriteStructure(protocol.PlayerAbilitiesPacket{
+		Flags:       0,
+		FlyingSpeed: 1,
+		FovModifier: 1,
+	})
 	connection.Write(packet.ToRawPacket(protocol.PlayerAbilitiesPacketId))
 	packet.Clear()
 	// broadcast player list item
