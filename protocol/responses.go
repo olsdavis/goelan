@@ -163,6 +163,8 @@ func (r *Response) WriteStructure(object interface{}) *Response {
 		r.WriteString(object.(string))
 	case []byte:
 		r.WriteByteArray(object.([]byte))
+	case JsonString:
+		r.WriteJSON(object)
 	default:
 		t := reflect.ValueOf(object)
 		if t.CanInterface() {
