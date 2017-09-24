@@ -143,18 +143,15 @@ func loginStartHandler(packet *RawPacket, sender *Connection) {
 	if sender.GetServer().IsOnlineMode() {
 		// send encryption request
 		token := encrypt.GenerateVerifyToken()
-		publicKey := sender.GetServer().GetPublicKey()
-
 		var encryptionRequest = struct {
 			ServerID    string
 			PublicKey   []byte
 			VerifyToken []byte
 		}{
 			"",
-			publicKey,
+			sender.GetServer().GetPublicKey(),
 			token,
 		}
-
 		response.WriteStructure(encryptionRequest)
 		sender.Write(response.ToRawPacket(EncryptionRequestPacketId))
 		sender.VerifyToken = token

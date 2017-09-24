@@ -287,6 +287,9 @@ func (s *Server) loadFavicon() {
 // Stop stops the server.
 func (s *Server) Stop() {
 	s.run = false
+	s.ForEachPlayerSync(func(c *Connection) {
+		c.Disconnect("Server closed.")
+	})
 	s.ticker.Stop()
 	s.BanList.SaveFile(banListFile)
 	close(s.ExitChan)
