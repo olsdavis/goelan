@@ -1,8 +1,12 @@
 package player
 
-import "github.com/olsdavis/goelan/world"
+import (
+	"github.com/olsdavis/goelan/world"
+	"github.com/olsdavis/goelan/util"
+)
 
 type PlayerProfile struct {
+	RealUUID   *util.UUID `json:"-"`
 	UUID       string     `json:"id"`
 	Name       string     `json:"name"`
 	Properties []Property `json:"properties"`
@@ -16,12 +20,12 @@ type Property struct {
 
 type Player struct {
 	Name string
-	UUID string
 	// key => the permission; value => true if the player has the permission
 	Permissions map[string]bool
 	Profile     PlayerProfile
 	Settings    *ClientSettings
 	Location    *world.Location
+	GameMode    GameMode
 }
 
 // Returns true if the player has the given permission.

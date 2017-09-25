@@ -1,6 +1,6 @@
 package player
 
-type GameMode int
+type GameMode byte
 
 const (
 	SurvivalMode GameMode = iota

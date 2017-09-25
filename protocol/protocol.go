@@ -177,6 +177,12 @@ const (
 	/*** PACKET CONSTS ***/
 	HandshakeStatusNextState = 1
 	HandshakeLoginNextState  = 2
+
+	PlayerListItemActionAddPlayer         = 0
+	PlayerListItemActionUpdateGamemode    = 0
+	PlayerListItemActionUpdateLatency     = 0
+	PlayerListItemActionUpdateDisplayName = 0
+	PlayerListItemActionRemovePlayer      = 0
 )
 
 // Chat

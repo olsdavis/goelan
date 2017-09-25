@@ -317,7 +317,7 @@ func (s *Server) handleConnection(conn net.Conn) {
 	// if the last connection state was the play state, we want to log his disconnection
 	if c.ConnectionState == PlayState {
 		s.playerLock.Lock()
-		delete(s.clients, c.Player.UUID)
+		delete(s.clients, c.Player.Profile.UUID)
 		s.playerLock.Unlock()
 
 		// broadcast
@@ -352,7 +352,6 @@ func (s *Server) FinishLogin(profile player.PlayerProfile, connection *Connectio
 	// TODO: Load permissions
 	pl := player.Player{
 		Name:        profile.Name,
-		UUID:        profile.UUID,
 		Permissions: make(map[string]bool),
 		Profile:     profile,
 		Settings:    &player.ClientSettings{},
@@ -370,7 +369,7 @@ func (s *Server) FinishLogin(profile player.PlayerProfile, connection *Connectio
 	}
 	connection.Player = &pl
 	s.playerLock.Lock()
-	s.clients[pl.UUID] = connection
+	s.clients[pl.Profile.UUID] = connection
 	s.playerLock.Unlock()
 	packet := protocol.NewResponse()
 	// send position and look packet
@@ -393,8 +392,13 @@ func (s *Server) FinishLogin(profile player.PlayerProfile, connection *Connectio
 	})
 	connection.Write(packet.ToRawPacket(protocol.PlayerAbilitiesPacketId))
 	packet.Clear()
-	// broadcast player list item
-
+	connection.AddPlayers(s.GetAllPlayers())
+	s.ForEachPlayerSync(func(c *Connection) {
+		if c == connection {
+			return
+		}
+		c.AddPlayers([]*player.Player{connection.Player})
+	})
 	// announce login in chat and logs
 	message := profile.Name + " has joined the server."
 	log.Info(message)

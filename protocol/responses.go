@@ -7,6 +7,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"reflect"
+	"github.com/olsdavis/goelan/util"
 )
 
 // Represents server list ping response.
@@ -103,6 +104,13 @@ func (r *Response) WriteDouble(d float64) *Response {
 	return r
 }
 
+// WriteUUID writes the most and then the least significant
+// bits of the given UUID.
+func (r *Response) WriteUUID(uuid *util.UUID) {
+	r.WriteLong(uuid.MostSig)
+	r.WriteLong(uuid.LeastSig)
+}
+
 // WriteByteArray writes the given byte array to the current response.
 func (r *Response) WriteByteArray(b []byte) *Response {
 	r.WriteUVarint(uint32(len(b)))
@@ -110,19 +118,9 @@ func (r *Response) WriteByteArray(b []byte) *Response {
 	return r
 }
 
-// WriteArray writes the length of the given array followed by each of
-// its components. Ignored if array's length is equal to 0.
-func (r *Response) WriteArray(arr []interface{}) *Response {
-	if len(arr) == 0 {
-		return r
-	}
-
-	r.WriteUVarint(uint32(len(arr)))
-	for _, elem := range arr {
-		r.WriteStructure(elem)
-	}
-
-	return r
+// WriteString writes the given string to the current response.
+func (r *Response) WriteString(str string) *Response {
+	return r.WriteByteArray([]byte(str))
 }
 
 // WriteJSON writes the given interface as a JSON string to the current response.
@@ -172,11 +170,6 @@ func (r *Response) WriteStructure(object interface{}) *Response {
 		}
 	}
 	return r
-}
-
-// WriteString writes the given string to the current response.
-func (r *Response) WriteString(str string) *Response {
-	return r.WriteByteArray([]byte(str))
 }
 
 // Returns the raw packet created from the written bytes and the provided id.

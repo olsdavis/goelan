@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"github.com/olsdavis/goelan/util"
 )
 
 const (
@@ -31,6 +32,11 @@ func Auth(username string, sharedSecret, publicKey []byte) (*PlayerProfile, erro
 	if err != nil {
 		return nil, err
 	}
+	realUniqueId, err := util.StringToUUID(util.ToHypenUUID(profile.UUID))
+	if err != nil {
+		panic(err)
+	}
+	profile.RealUUID = realUniqueId
 	return &profile, nil
 }
 

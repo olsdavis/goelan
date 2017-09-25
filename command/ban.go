@@ -37,7 +37,7 @@ func (cmd BanCommand) Execute(label string, args []string, sender CommandSender)
 		} else {
 			reason = "You have been banned."
 		}
-		server.Get().BanList.AddPlayer(ban.Player.UUID, reason)
+		server.Get().BanList.AddPlayer(ban.Player.Profile.UUID, reason)
 		ban.Disconnect(reason)
 	} else {
 		sender.SendMessage(fmt.Sprintf("The player %v could not be found.", args[0]))
