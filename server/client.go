@@ -139,36 +139,6 @@ func (c *Connection) write() {
 				continue
 			}
 
-			if packet.ID == protocol.PlayerListItemPacketId {
-				duplicate := protocol.NewRawPacket(protocol.PlayerListItemPacketId, packet.Data.Buf, nil)
-				log.Debug("action:", duplicate.ReadVarint())
-				i, n := duplicate.ReadVarint(), int32(0)
-				log.Debug("players:", i)
-				for ; n < i; n++ {
-					log.Debug("most sig:", duplicate.ReadLong())
-					log.Debug("least sig:", duplicate.ReadLong())
-					log.Debug("name:", duplicate.ReadString())
-					props, y := duplicate.ReadVarint(), int32(0)
-					log.Debug("props len:", props)
-					for ; y < props; y++ {
-						log.Debug("prop name:", duplicate.ReadString())
-						log.Debug("prop value:", duplicate.ReadString())
-						signed := duplicate.ReadBoolean()
-						log.Debug("signed:", signed)
-						if signed {
-							log.Debug("signature:", duplicate.ReadString())
-						}
-					}
-					log.Debug("gamemode:", duplicate.ReadVarint())
-					log.Debug("ping:", duplicate.ReadVarint())
-					hasDN := duplicate.ReadBoolean()
-					log.Debug("has display name:", hasDN)
-					if hasDN {
-						log.Debug("display name:", duplicate.ReadString())
-					}
-				}
-			}
-
 			_, err := c.Writer.Write(toByteArray(packet))
 
 			// omit this error
@@ -225,7 +195,7 @@ func (c *Connection) SendMessage(message string, mode protocol.MessageMode) {
 
 func (c *Connection) AddPlayers(players []*player.Player) {
 	packet := protocol.NewResponse()
-	packet.WriteVarint(protocol.PlayerListItemActionAddPlayer)
+	packet.WriteByte(protocol.PlayerListItemActionAddPlayer)
 	packet.WriteVarint(int32(len(players)))
 	for _, pl := range players {
 		profile := pl.Profile
@@ -246,7 +216,7 @@ func (c *Connection) AddPlayers(players []*player.Player) {
 		packet.WriteVarint(int32(pl.GameMode))
 		packet.WriteVarint(0)
 		packet.WriteBoolean(true)
-		packet.WriteString(profile.Name)
+		packet.WriteJSON(protocol.ChatComponent{profile.Name})
 	}
 	c.Write(packet.ToRawPacket(protocol.PlayerListItemPacketId))
 }

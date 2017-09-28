@@ -179,10 +179,10 @@ const (
 	HandshakeLoginNextState  = 2
 
 	PlayerListItemActionAddPlayer         = 0
-	PlayerListItemActionUpdateGamemode    = 0
-	PlayerListItemActionUpdateLatency     = 0
-	PlayerListItemActionUpdateDisplayName = 0
-	PlayerListItemActionRemovePlayer      = 0
+	PlayerListItemActionUpdateGamemode    = 1
+	PlayerListItemActionUpdateLatency     = 2
+	PlayerListItemActionUpdateDisplayName = 3
+	PlayerListItemActionRemovePlayer      = 4
 )
 
 // Chat

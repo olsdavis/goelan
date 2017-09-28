@@ -17,6 +17,9 @@ func Uvarint(n uint32) []byte {
 func Varint(n int32) []byte {
 	buf := make([]byte, 5)
 	l := binary.PutVarint(buf, int64(n))
+	if n == 1 && buf[0] != 1 { // temp
+		buf[0] = 1
+	}
 	return buf[:l]
 }
 
