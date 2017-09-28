@@ -216,7 +216,7 @@ func (c *Connection) AddPlayers(players []*player.Player) {
 		packet.WriteVarint(int32(pl.GameMode))
 		packet.WriteVarint(0)
 		packet.WriteBoolean(true)
-		packet.WriteJSON(protocol.ChatComponent{profile.Name})
+		packet.WriteJSON(protocol.ChatComponent{Text: profile.Name})
 	}
 	c.Write(packet.ToRawPacket(protocol.PlayerListItemPacketId))
 }

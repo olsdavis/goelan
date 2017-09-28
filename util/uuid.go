@@ -2,7 +2,6 @@ package util
 
 import (
 	"fmt"
-	"regexp"
 	"errors"
 	"strings"
 	"strconv"
@@ -48,8 +47,6 @@ func mustDecodeHex(str string) int64 {
 	}
 	return val
 }
-
-var usernameRegex = regexp.MustCompile("^[a-zA-Z0-9_]{1,16}$")
 
 // ToHypenUUID returns the uuid with the hyphens.
 func ToHypenUUID(uuid string) string {
