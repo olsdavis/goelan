@@ -196,7 +196,7 @@ func (c *Connection) SendMessage(message string, mode protocol.MessageMode) {
 func (c *Connection) AddPlayers(players []*player.Player) {
 	packet := protocol.NewResponse()
 	packet.WriteByte(protocol.PlayerListItemActionAddPlayer)
-	packet.WriteVarint(int32(len(players)))
+	packet.WriteUVarint(uint32(len(players)))
 	for _, pl := range players {
 		profile := pl.Profile
 
