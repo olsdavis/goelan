@@ -162,6 +162,7 @@ const (
 	IncomingChatPacketId          = 0x02
 	ClientStatusPacketId          = 0x03
 	ClientSettingsPacketId        = 0x04
+	SpawnPlayerPacketId           = 0x05
 	AnimationPacketId             = 0x06
 	PluginMessagePacketId         = 0x09
 	KeepAliveIncomingPacketId     = 0x0B

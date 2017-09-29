@@ -200,7 +200,7 @@ func (c *Connection) AddPlayers(players []*player.Player) {
 	for _, pl := range players {
 		profile := pl.Profile
 
-		packet.WriteUUID(profile.RealUUID)
+		packet.WriteUUID(*profile.RealUUID)
 		packet.WriteString(profile.Name)
 		packet.WriteVarint(int32(len(profile.Properties)))
 		for _, property := range profile.Properties {

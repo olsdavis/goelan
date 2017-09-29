@@ -107,7 +107,7 @@ func (r *Response) WriteDouble(d float64) *Response {
 
 // WriteUUID writes the most and then the least significant
 // bits of the given UUID.
-func (r *Response) WriteUUID(uuid *util.UUID) {
+func (r *Response) WriteUUID(uuid util.UUID) {
 	r.WriteLong(uuid.MostSig)
 	r.WriteLong(uuid.LeastSig)
 }
@@ -169,13 +169,22 @@ func (r *Response) WriteStructure(object interface{}) *Response {
 		r.WriteDouble(float64(loc.Z))
 		r.WriteFloat(loc.Yaw)
 		r.WriteFloat(loc.Pitch)
+	case util.UUID:
+		r.WriteUUID(object.(util.UUID))
 	default:
 		t := reflect.ValueOf(object)
 		if t.CanInterface() {
 			for i := 0; i < t.NumField(); i++ {
 				f := t.Field(i)
 				if f.Kind() == reflect.Ptr {
+					if f.IsNil() {
+						continue
+					}
 					f = f.Elem()
+				}
+				// ignore nil values
+				if f.Kind() == reflect.Struct && reflect.Zero(f.Type()) == f {
+					continue
 				}
 				r.WriteStructure(f.Interface())
 			}

@@ -3,11 +3,12 @@
 
 package protocol
 
-import "github.com/olsdavis/goelan/world"
+import (
+	"github.com/olsdavis/goelan/world"
+	"github.com/olsdavis/goelan/util"
+)
 
 type (
-	JsonString interface {}
-
 	PositionAndLookPacket struct {
 		world.Location
 		Flags      int8
@@ -18,5 +19,11 @@ type (
 		Flags       int8
 		FlyingSpeed float32
 		FovModifier float32
+	}
+
+	SpawnPlayerPacket struct {
+		EntityId   int32
+		PlayerUUID util.UUID
+		world.Location3f
 	}
 )
