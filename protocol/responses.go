@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"reflect"
 	"github.com/olsdavis/goelan/util"
+	"github.com/olsdavis/goelan/world"
 )
 
 // Represents server list ping response.
@@ -161,11 +162,22 @@ func (r *Response) WriteStructure(object interface{}) *Response {
 		r.WriteString(object.(string))
 	case []byte:
 		r.WriteByteArray(object.([]byte))
+	case world.Location:
+		loc := object.(world.Location)
+		r.WriteDouble(float64(loc.X))
+		r.WriteDouble(float64(loc.Y))
+		r.WriteDouble(float64(loc.Z))
+		r.WriteFloat(loc.Yaw)
+		r.WriteFloat(loc.Pitch)
 	default:
 		t := reflect.ValueOf(object)
 		if t.CanInterface() {
 			for i := 0; i < t.NumField(); i++ {
-				r.WriteStructure(t.Field(i).Interface())
+				f := t.Field(i)
+				if f.Kind() == reflect.Ptr {
+					f = f.Elem()
+				}
+				r.WriteStructure(f.Interface())
 			}
 		}
 	}
