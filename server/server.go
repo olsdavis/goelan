@@ -374,11 +374,7 @@ func (s *Server) FinishLogin(profile player.PlayerProfile, connection *Connectio
 	packet := protocol.NewResponse()
 	// send position and look packet
 	packet.WriteStructure(protocol.PositionAndLookPacket{
-		X:          float64(pl.Location.X),
-		Y:          float64(pl.Location.Y),
-		Z:          float64(pl.Location.Z),
-		Yaw:        pl.Location.Yaw,
-		Pitch:      pl.Location.Pitch,
+		Location:   *pl.Location,
 		Flags:      0,
 		TeleportID: int32(rand.Intn(0xFFFE)),
 	})
@@ -394,7 +390,7 @@ func (s *Server) FinishLogin(profile player.PlayerProfile, connection *Connectio
 	packet.Clear()
 	connection.AddPlayers(s.GetAllPlayers())
 	s.ForEachPlayerSync(func(c *Connection) {
-		if c == connection {
+		if c.Player.Profile.UUID == connection.Player.Profile.UUID {
 			return
 		}
 		c.AddPlayers([]*player.Player{connection.Player})

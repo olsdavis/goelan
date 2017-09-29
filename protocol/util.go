@@ -10,11 +10,15 @@ import (
 func Uvarint(n uint32) []byte {
 	buf := make([]byte, 5)
 	l := binary.PutUvarint(buf, uint64(n))
-
 	return buf[:l]
 }
 
+var oneVarintBuf []byte = []byte{1}
+
 func Varint(n int32) []byte {
+	if n == 1 {  // TODO: fix this
+		return oneVarintBuf
+	}
 	buf := make([]byte, 5)
 	l := binary.PutVarint(buf, int64(n))
 	return buf[:l]

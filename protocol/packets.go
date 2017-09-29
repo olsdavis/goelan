@@ -3,15 +3,13 @@
 
 package protocol
 
+import "github.com/olsdavis/goelan/world"
+
 type (
 	JsonString interface {}
 
 	PositionAndLookPacket struct {
-		X          float64
-		Y          float64
-		Z          float64
-		Yaw        float32
-		Pitch      float32
+		world.Location
 		Flags      int8
 		TeleportID int32
 	}
