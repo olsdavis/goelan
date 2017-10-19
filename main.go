@@ -5,6 +5,7 @@ import (
 	"github.com/olsdavis/goelan/log"
 	"github.com/olsdavis/goelan/server"
 	"os"
+	"strings"
 )
 
 func main() {
@@ -22,7 +23,7 @@ func main() {
 		case <-srv.ExitChan:
 			break
 		case line := <-command.ConsoleChannel:
-			command.ExecuteCommand(line[:len(line)-2]/*remove the \n character*/, command.ConsoleSender)
+			command.ExecuteCommand(strings.TrimSpace(line), command.ConsoleSender)
 		}
 	}
 
