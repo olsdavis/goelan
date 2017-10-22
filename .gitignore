@@ -1,5 +1,3 @@
-logs/
-
 # tests, benchmarks, etc.
 *.cpu
 *.mem
@@ -14,5 +12,4 @@ server.properties
 *.so
 *.dylib
 
-# for those who may want to use an IDE (I personally use Sublime Text)
 /.idea
