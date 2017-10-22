@@ -138,6 +138,10 @@ func (r *RawPacket) ReadString() string {
 	return string(r.ReadByteArray())
 }
 
+func (r *RawPacket) ReadStructure(impl *interface{}) {
+
+}
+
 func (r *RawPacket) Release() {
 	if r.Data == nil {
 		panic("data is nil!")
@@ -159,21 +163,26 @@ const (
 	EncryptionResponsePacketId   = 0x01
 	LoginSuccessPacketId         = 0x02
 	// Play state
-	IncomingChatPacketId          = 0x02
-	ClientStatusPacketId          = 0x03
-	ClientSettingsPacketId        = 0x04
-	SpawnPlayerPacketId           = 0x05
-	AnimationPacketId             = 0x06
-	PluginMessagePacketId         = 0x09
-	KeepAliveIncomingPacketId     = 0x0B
-	OutgoingChatPacketId          = 0x0F
-	KickPlayerPacketId            = 0x1A
-	KeepAliveOutgoingPacketId     = 0x1F
-	ChunkDataPacketId             = 0x20
-	JoinGamePacketId              = 0x23
-	PlayerAbilitiesPacketId       = 0x2C
-	PlayerListItemPacketId        = 0x2E
-	PlayerPositionAndLookPacketId = 0x2F
+	TeleportConfirmPacketId               = 0x00
+	IncomingChatPacketId                  = 0x02
+	ClientStatusPacketId                  = 0x03
+	ClientSettingsPacketId                = 0x04
+	SpawnPlayerPacketId                   = 0x05
+	OutgoingAnimationPacketId             = 0x06
+	ClickWindowPacketId                   = 0x07
+	CloseWindowPacketId                   = 0x08
+	PluginMessagePacketId                 = 0x09
+	KeepAliveIncomingPacketId             = 0x0B
+	IncomingPlayerPositionAndLookPacketId = 0x0E
+	OutgoingChatPacketId                  = 0x0F
+	KickPlayerPacketId                    = 0x1A
+	IncomingAnimationPacketId             = 0x1D
+	KeepAliveOutgoingPacketId             = 0x1F
+	ChunkDataPacketId                     = 0x20
+	JoinGamePacketId                      = 0x23
+	PlayerAbilitiesPacketId               = 0x2C
+	PlayerListItemPacketId                = 0x2E
+	OutgoingPlayerPositionAndLookPacketId = 0x2F
 
 	/*** PACKET CONSTS ***/
 	HandshakeStatusNextState = 1
@@ -196,4 +205,14 @@ const (
 	DefaultMessageMode
 	// action bar message
 	ActionBarMode
+)
+
+// Animation
+const (
+	SwingMainArmAnimation        = iota
+	TakeDamageAnimation
+	LeaveBedAnimation
+	SwingOffHandAnimation
+	CriticalEffectAnimation
+	MagicCriticalEffectAnimation
 )

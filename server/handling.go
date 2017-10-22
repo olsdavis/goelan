@@ -47,11 +47,16 @@ func init() {
 	}
 	handlers[PlayState] = stateMapHandler{
 		map[uint64]PacketHandler{
-			PluginMessagePacketId:     pluginMessageHandler,
-			KeepAliveIncomingPacketId: keepAliveHandler,
-			ClientSettingsPacketId:    clientSettingsHandler,
-			ClientStatusPacketId:      clientStatusHandler,
-			IncomingChatPacketId:      chatMessageHandler,
+			PluginMessagePacketId:                 pluginMessageHandler,
+			KeepAliveIncomingPacketId:             keepAliveHandler,
+			ClientSettingsPacketId:                clientSettingsHandler,
+			ClientStatusPacketId:                  clientStatusHandler,
+			IncomingChatPacketId:                  chatMessageHandler,
+			TeleportConfirmPacketId:               teleportConfirmHandler,
+			IncomingPlayerPositionAndLookPacketId: playerPositionAndLookHandler,
+			IncomingAnimationPacketId:             animationHandler,
+			ClickWindowPacketId:                   clickWindowHandler,
+			CloseWindowPacketId:                   closeWindowHandler,
 		},
 	}
 }

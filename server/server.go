@@ -378,7 +378,7 @@ func (s *Server) FinishLogin(profile player.PlayerProfile, connection *Connectio
 		Flags:      0,
 		TeleportID: int32(rand.Intn(0xFFFE)),
 	})
-	connection.Write(packet.ToRawPacket(protocol.PlayerPositionAndLookPacketId))
+	connection.Write(packet.ToRawPacket(protocol.OutgoingPlayerPositionAndLookPacketId))
 	packet.Clear()
 	// send abilities packet
 	packet.WriteStructure(protocol.PlayerAbilitiesPacket{

@@ -38,3 +38,23 @@ func chatMessageHandler(packet *RawPacket, sender *Connection) {
 	log.Info(sender.Player.Name, message)
 	sender.SendMessage(message, ChatMessageMode)
 }
+
+func teleportConfirmHandler(packet *RawPacket, sender *Connection) {
+	//TODO: implement
+}
+
+func playerPositionAndLookHandler(packet *RawPacket, sender *Connection) {
+	//TODO: implement
+}
+
+func animationHandler(packet *RawPacket, sender *Connection) {
+	//TODO: implement
+}
+
+func clickWindowHandler(packet *RawPacket, sender *Connection) {
+	//TODO: implement
+}
+
+func closeWindowHandler(packet *RawPacket, sender *Connection) {
+	//TODO: implement
+}
