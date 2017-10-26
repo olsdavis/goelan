@@ -6,6 +6,9 @@ import (
 	"github.com/olsdavis/goelan/log"
 	"sync"
 	"math"
+	"github.com/olsdavis/goelan/world"
+	"reflect"
+	"github.com/olsdavis/goelan/util"
 )
 
 const (
@@ -139,7 +142,40 @@ func (r *RawPacket) ReadString() string {
 }
 
 func (r *RawPacket) ReadStructure(impl *interface{}) {
-
+	switch impl.(type) {
+	case int8:
+		*impl = r.ReadByte()
+	case uint8:
+		*impl = r.ReadUnsignedByte()
+	case bool:
+		*impl = r.ReadBoolean()
+	case int:
+	case int32:
+		*impl = r.ReadVarint()
+	case int64:
+		//TODO: implement
+		panic("unimplemented: varlong")
+	case uint32:
+		*impl = r.ReadUnsignedVarint()
+	case float32:
+		*impl = r.ReadFloat()
+	case float64:
+		*impl = r.ReadDouble()
+	case string:
+		*impl = r.ReadString()
+	case []byte:
+		*impl = r.ReadByteArray()
+	case world.Location:
+		//TODO: implement
+		panic("unimplemented: world.Location")
+	case util.UUID:
+		//TODO: implement
+		panic("unimplemented: util.UUID")
+	default:
+		t := reflect.ValueOf(impl)
+		if t.CanInterface() {
+		}
+	}
 }
 
 func (r *RawPacket) Release() {
