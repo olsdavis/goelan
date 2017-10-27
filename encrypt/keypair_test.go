@@ -5,12 +5,12 @@ import (
 	"testing"
 )
 
-var key *rsa.PrivateKey = GenerateKeyPair()
+var key *rsa.PrivateKey = GeneratePrivateKey()
 
 func BenchmarkGenerateKeyPair(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		GenerateKeyPair()
+		GeneratePrivateKey()
 	}
 }
 

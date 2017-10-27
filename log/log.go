@@ -11,7 +11,7 @@ var (
 	Logger *justlog.Logger
 )
 
-// Initializes the logger.
+// Init initializes the logger.
 func Init() {
 	if initialized {
 		return

@@ -6,8 +6,8 @@ import (
 	"crypto/x509"
 )
 
-// Generates an 1024 bits RSA keypair.
-func GenerateKeyPair() *rsa.PrivateKey {
+// Generates a 1024 bits RSA private key.
+func GeneratePrivateKey() *rsa.PrivateKey {
 	key, err := rsa.GenerateKey(rand.Reader, 1024)
 	if err != nil {
 		panic("Could not create private key")
@@ -19,7 +19,8 @@ func GenerateKeyPair() *rsa.PrivateKey {
 	return key
 }
 
-// Generates the public key from of the keypair.
+// GeneratePublicKey generates the public key from the
+// RSA private key.
 func GeneratePublicKey(key *rsa.PrivateKey) []byte {
 	pub := &key.PublicKey
 	pk, err := x509.MarshalPKIXPublicKey(pub)
@@ -29,7 +30,8 @@ func GeneratePublicKey(key *rsa.PrivateKey) []byte {
 	return pk
 }
 
-// Generates a verify token used for players' authentication.
+// GenerateVerifyToken generates a verify token used for
+// players' authentication.
 func GenerateVerifyToken() []byte {
 	buf := make([]byte, 4)
 	rand.Read(buf)

@@ -193,7 +193,7 @@ func (r *Response) WriteStructure(object interface{}) *Response {
 	return r
 }
 
-// Returns the raw packet created from the written bytes and the provided id.
+// ToRawPacket creates a raw packet from the written bytes and the provided id.
 func (r *Response) ToRawPacket(id uint64) *RawPacket {
 	return NewRawPacket(id, r.data.Bytes(), nil)
 }

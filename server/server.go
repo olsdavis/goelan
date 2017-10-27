@@ -34,7 +34,8 @@ const (
 	propertiesFile = "server.toml"
 )
 
-// Server's properties, read from the properties file ("server.toml").
+// ServerProperties struct represents the data read from
+// the properties file ("server.toml").
 type ServerProperties struct {
 	Port         uint16 `toml:"port"`        // server's port
 	Address      string `toml:"address"`     // server's address
@@ -44,7 +45,7 @@ type ServerProperties struct {
 	ViewDistance int    `toml:"view-distance"`
 }
 
-// Represents a Minecraft server.
+// Server struct represents a running Minecraft server.
 type Server struct {
 	run         bool
 	initialized bool             // true, if the server has been initialized
@@ -59,7 +60,7 @@ type Server struct {
 	favicon         string          // the favicon
 	ticker          *time.Ticker    // the ticker for the ticking :)
 	keepAliveTicker *time.Ticker    // the ticker used for sending keep alive packets
-	rsaKeypair      *rsa.PrivateKey // the keypair used for encryption
+	rsaPrivateKey   *rsa.PrivateKey // the keypair used for encryption
 	publicKey       []byte          // the public key in bytes
 
 	world *world.World // one world only, for the moment
@@ -67,7 +68,7 @@ type Server struct {
 	ExitChan chan int // a channel used for server's close
 }
 
-// Creates a new server.
+// CreateServer represents a new server.
 func CreateServer(properties ServerProperties) *Server {
 	if serverInstance != nil {
 		panic("already created a server")
@@ -82,7 +83,7 @@ func CreateServer(properties ServerProperties) *Server {
 		favicon:         "",
 		ticker:          nil,
 		keepAliveTicker: nil,
-		rsaKeypair:      encrypt.GenerateKeyPair(),
+		rsaPrivateKey:   encrypt.GeneratePrivateKey(),
 		publicKey:       nil,
 		world:           nil,
 		ExitChan:        make(chan int, 1),
@@ -90,12 +91,13 @@ func CreateServer(properties ServerProperties) *Server {
 	return serverInstance
 }
 
-// Creates a new server from the properties file.
+// CreateServerFromProperties creates a new server from the properties file.
 func CreateServerFromProperties() *Server {
 	props := readProperties()
 	return CreateServer(*props)
 }
 
+// readProperties reads the properties file ("server.toml").
 func readProperties() *ServerProperties {
 	var properties ServerProperties
 
@@ -162,14 +164,14 @@ func (s *Server) IsOnlineMode() bool {
 // GetPublicKey returns the public key. (Generates it if it has not been done yet.)
 func (s *Server) GetPublicKey() []byte {
 	if s.publicKey == nil {
-		s.publicKey = encrypt.GeneratePublicKey(s.rsaKeypair)
+		s.publicKey = encrypt.GeneratePublicKey(s.rsaPrivateKey)
 	}
 	return s.publicKey
 }
 
 // GetPrivateKey returns server's private key.
 func (s *Server) GetPrivateKey() *rsa.PrivateKey {
-	return s.rsaKeypair
+	return s.rsaPrivateKey
 }
 
 // GetServerVersion returns server's version (protocol and name).
@@ -474,14 +476,14 @@ func (s *Server) ForEachPlayerSync(action func(*Connection)) {
 	s.playerLock.Unlock()
 }
 
-// Broadcasts the given packet to all the online players (async).
+// Broadcast broadcasts the given packet to all the online players (async).
 func (s *Server) BroadcastPacket(packet *protocol.RawPacket) {
 	s.ForEachPlayerSync(func(c *Connection) {
 		c.Write(packet)
 	})
 }
 
-// Broadcasts the given message to all the players (async).
+// BroadcastMessage broadcasts the given message to all the players (async).
 // Message's mode depends on what you want to send:
 // - ChatMessageMode (mode 0): used for players only;
 // - DefaultMessageMode (mode 1): what you should use (system messages);

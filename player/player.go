@@ -28,13 +28,13 @@ type Player struct {
 	GameMode    GameMode
 }
 
-// Returns true if the player has the given permission.
+// HasPermission returns true if the player has the given permission.
 func (player *Player) HasPermission(permission string) bool {
 	can, ok := player.Permissions[permission]
 	return can && ok
 }
 
-// If can is true, the player will have the given permission; otherwise, he won't.
+// SetPermission sets whether the player will have the given permission or not.
 func (player *Player) SetPermission(permission string, can bool) {
 	player.Permissions[permission] = can
 }

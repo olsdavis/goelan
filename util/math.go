@@ -1,6 +1,6 @@
 package util
 
-// Returns the smallest integer of x and y. If x equals y, returns x.
+// Min returns the smallest integer of x and y. If x equals y, returns x.
 // This function is the same as math.Min,
 // the only difference is that it works with integers,
 // so it won't create any bugs with floating points.

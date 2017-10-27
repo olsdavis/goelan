@@ -41,6 +41,8 @@ type RawPacket struct {
 	Callback Callback // the callback is a function called when the packet is sent
 }
 
+// NewRawPacket creates a RawPacket from the packet's id, the data and
+// the given Callback.
 func NewRawPacket(id uint64, data []byte, callback Callback) *RawPacket {
 	b := readerPool.Get().(*ByteReader)
 	b.SetData(data)
@@ -51,6 +53,7 @@ func NewRawPacket(id uint64, data []byte, callback Callback) *RawPacket {
 	}
 }
 
+// ReadByte reads a byte and returns it.
 func (r *RawPacket) ReadByte() byte {
 	b, err := r.Data.ReadByte()
 	if err != nil {
@@ -59,6 +62,7 @@ func (r *RawPacket) ReadByte() byte {
 	return b
 }
 
+// ReadUnsignedByte reads an unsigned byte and returns it.
 func (r *RawPacket) ReadUnsignedByte() byte {
 	var ubyte uint8
 	err := binary.Read(r.Data, ByteOrder, &ubyte)
@@ -68,10 +72,12 @@ func (r *RawPacket) ReadUnsignedByte() byte {
 	return ubyte
 }
 
+// ReadBoolean reads a boolean and returns it.
 func (r *RawPacket) ReadBoolean() bool {
 	return r.ReadByte() == 1
 }
 
+// ReadUnsignedShort reads an unsigned short and returns it.
 func (r *RawPacket) ReadUnsignedShort() uint16 {
 	var short uint16
 	err := binary.Read(r.Data, ByteOrder, &short)
@@ -81,6 +87,7 @@ func (r *RawPacket) ReadUnsignedShort() uint16 {
 	return short
 }
 
+// ReadVarint reads a Varint and returns it.
 func (r *RawPacket) ReadVarint() int32 {
 	i, err := binary.ReadVarint(r.Data)
 	if err != nil {
@@ -89,6 +96,7 @@ func (r *RawPacket) ReadVarint() int32 {
 	return int32(i)
 }
 
+// ReadUnsignedVarint reads an unsigned Varint and returns it.
 func (r *RawPacket) ReadUnsignedVarint() uint32 {
 	i, err := binary.ReadUvarint(r.Data)
 	if err != nil {
@@ -97,18 +105,21 @@ func (r *RawPacket) ReadUnsignedVarint() uint32 {
 	return uint32(i)
 }
 
+// ReadFloat reads a float32 and returns it.
 func (r *RawPacket) ReadFloat() float32 {
 	buf := make([]byte, 4)
 	r.Data.Read(buf)
 	return math.Float32frombits(ByteOrder.Uint32(buf))
 }
 
+// ReadDouble reads a float64 and returns it.
 func (r *RawPacket) ReadDouble() float64 {
 	buf := make([]byte, 8)
 	r.Data.Read(buf)
 	return math.Float64frombits(ByteOrder.Uint64(buf))
 }
 
+// ReadLong reads an int64 and returns it.
 func (r *RawPacket) ReadLong() int64 {
 	var long int64
 	err := binary.Read(r.Data, ByteOrder, &long)
@@ -118,6 +129,8 @@ func (r *RawPacket) ReadLong() int64 {
 	return long
 }
 
+// ReadByteArrayMax reads a byte array which's length
+// cannot exceed max.
 func (r *RawPacket) ReadByteArrayMax(max uint32) []byte {
 	size := r.ReadUnsignedVarint()
 	if size > max {
@@ -129,18 +142,24 @@ func (r *RawPacket) ReadByteArrayMax(max uint32) []byte {
 	return buf
 }
 
+// ReadByteArray reads a byte array which's length cannot
+// exceed MaxByteArrayLength.
 func (r *RawPacket) ReadByteArray() []byte {
 	return r.ReadByteArrayMax(MaxByteArrayLength)
 }
 
+// ReadStringMax reads a string which's length cannot exceed max.
 func (r *RawPacket) ReadStringMax(max uint32) string {
 	return string(r.ReadByteArrayMax(max))
 }
 
+// ReadString reads a string which's length cannot exceed MaxByteArrayLength.
 func (r *RawPacket) ReadString() string {
 	return string(r.ReadByteArray())
 }
 
+// ReadStructure reads the data as the given structure,
+// and sets its pointer's value.
 func (r *RawPacket) ReadStructure(impl *interface{}) {
 	switch impl.(type) {
 	case int8:
@@ -178,6 +197,7 @@ func (r *RawPacket) ReadStructure(impl *interface{}) {
 	}
 }
 
+// Release releases RawPacket's data and puts it back to the pool.
 func (r *RawPacket) Release() {
 	if r.Data == nil {
 		panic("data is nil!")

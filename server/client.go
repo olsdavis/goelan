@@ -50,6 +50,7 @@ type KeepAliveData struct {
 	ID       int64
 }
 
+// Connection struct represents a connected client.
 type Connection struct {
 	server          *Server
 	Writer          io.WriteCloser
@@ -72,7 +73,7 @@ type Connection struct {
 	sync.Mutex
 }
 
-// Creates a new connection from the given ReadWriter.
+// NewConnection creates a new connection from the given ReadWriter.
 func NewConnection(socket net.Conn, server *Server) *Connection {
 	return &Connection{
 		server:          server,
@@ -92,8 +93,7 @@ func NewConnection(socket net.Conn, server *Server) *Connection {
 	}
 }
 
-// Reads the next packet and returns the Packet object from the
-// "protocol" package.
+// Next reads the next packet and returns a RawPacket.
 func (c *Connection) Next() (*protocol.RawPacket, error) {
 	size, err := binary.ReadUvarint(c.Reader)
 
@@ -115,7 +115,7 @@ func (c *Connection) Next() (*protocol.RawPacket, error) {
 	return rawPacket, nil
 }
 
-// Write sends the given packet to the current connection.
+// Write enqueues the given packet to the current connection.
 func (c *Connection) Write(packet *protocol.RawPacket) {
 	if packet == nil {
 		return
@@ -123,7 +123,8 @@ func (c *Connection) Write(packet *protocol.RawPacket) {
 	c.writeChan <- packet
 }
 
-// Receives packets from the writeChan and sends them to client.
+// write receives packets from the writeChan channel and sends
+// them to client.
 func (c *Connection) write() {
 	for {
 		select {
@@ -162,19 +163,21 @@ func toByteArray(packet *protocol.RawPacket) []byte {
 	return append(protocol.Uvarint(uint32(send.Len())), send.Bytes()...)
 }
 
-// Returns connection's server.
+// GetServer returns client's server.
 func (c *Connection) GetServer() *Server {
 	return c.server
 }
 
-// Returns true if the client is connected.
+// IsConnected returns true if the client is connected.
+// Locks the Mutex for the operation and unlocks it at the end.
 func (c *Connection) IsConnected() bool {
 	defer c.Unlock()
 	c.Lock()
 	return c.connected
 }
 
-// Sets the connected field's value.
+// SetConnected sets the connected field's value to b.
+// Locks the Mutex for the operation and unlocks it at the end.
 func (c *Connection) SetConnected(b bool) {
 	c.Lock()
 	c.connected = b
@@ -193,6 +196,8 @@ func (c *Connection) SendMessage(message string, mode protocol.MessageMode) {
 	c.Write(response.ToRawPacket(protocol.OutgoingChatPacketId))
 }
 
+// AddPlayers sends to the current client the packet which adds
+// to his player list the given players.
 func (c *Connection) AddPlayers(players []*player.Player) {
 	packet := protocol.NewResponse()
 	packet.WriteByte(protocol.PlayerListItemActionAddPlayer)
@@ -221,7 +226,7 @@ func (c *Connection) AddPlayers(players []*player.Player) {
 	c.Write(packet.ToRawPacket(protocol.PlayerListItemPacketId))
 }
 
-// Disconnects the current client for the given reason. (May be empty.)
+// Disconnect disconnects the current client for the given reason. (May be empty.)
 func (c *Connection) Disconnect(reason string) {
 	if !c.IsConnected() {
 		return
