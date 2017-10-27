@@ -476,7 +476,7 @@ func (s *Server) ForEachPlayerSync(action func(*Connection)) {
 	s.playerLock.Unlock()
 }
 
-// Broadcast broadcasts the given packet to all the online players (async).
+// BroadcastPacket broadcasts the given packet to all the online players (async).
 func (s *Server) BroadcastPacket(packet *protocol.RawPacket) {
 	s.ForEachPlayerSync(func(c *Connection) {
 		c.Write(packet)
