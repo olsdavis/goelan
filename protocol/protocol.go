@@ -161,7 +161,8 @@ func (r *RawPacket) ReadString() string {
 // ReadStructure reads the data as the given structure,
 // and sets its pointer's value.
 func (r *RawPacket) ReadStructure(impl *interface{}) {
-	switch impl.(type) {
+	s := *impl
+	switch s.(type) {
 	case int8:
 		*impl = r.ReadByte()
 	case uint8:
