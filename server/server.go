@@ -23,7 +23,7 @@ var (
 	serverInstance *Server
 )
 
-// Returns the server's single instance
+// Get returns the server's single instance.
 func Get() *Server {
 	return serverInstance
 }
@@ -45,7 +45,7 @@ type ServerProperties struct {
 	ViewDistance int    `toml:"view-distance"`
 }
 
-// Server struct represents a running Minecraft server.
+// Server struct represents a running Golang Minecraft server.
 type Server struct {
 	run         bool
 	initialized bool             // true, if the server has been initialized
@@ -68,7 +68,7 @@ type Server struct {
 	ExitChan chan int // a channel used for server's close
 }
 
-// CreateServer represents a new server.
+// CreateServer creates a new server. Panics if one is already existing.
 func CreateServer(properties ServerProperties) *Server {
 	if serverInstance != nil {
 		panic("already created a server")
@@ -184,12 +184,12 @@ func (s *Server) GetViewDistance() int {
 	return s.properties.ViewDistance
 }
 
-// Returns true if the server is currently running
+// IsServer returns true if the server is currently running.
 func (s *Server) IsRunning() bool {
 	return s.run
 }
 
-// Starts initializes the server.
+// Start initializes the server.
 func (s *Server) Start() {
 	if s.initialized {
 		return
@@ -225,6 +225,11 @@ func (s *Server) Start() {
 	}
 }
 
+// Reload reloads the resources required by the server and the plugins.
+func (s *Server) Reload() {
+	s.load()
+}
+
 // tick handles server's logic.
 func (s *Server) tick() {
 	for s.run {
@@ -257,9 +262,8 @@ func (s *Server) keepAlive() {
 	}
 }
 
-// load loads everything the server needs.
-// It is apart from the function from Start()
-// because we may need to reload the server later on.
+// load loads the resources required by the server, such as the favicon
+// or the ban list.
 func (s *Server) load() {
 	s.loadFavicon()
 	s.loadBanList()
