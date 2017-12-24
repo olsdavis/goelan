@@ -248,13 +248,19 @@ func (s *Server) keepAlive() {
 		packet := protocol.NewResponse().WriteLong(id).ToRawPacket(protocol.KeepAliveOutgoingPacketId)
 		s.ForEachPlayerSync(func(c *Connection) {
 			c.Lock()
-			if c.LastKeepAlive.ID == -1 {
-				c.LastKeepAlive.ID = id
-				c.LastKeepAlive.Deadline = time.Now().Add(time.Second * time.Duration(30))
+			list := c.PendingKeepAlives.Elements()
+			if len(list) == 0 {
+				c.PendingKeepAlives.Append(player.KeepAliveData{
+					Deadline: time.Now().Add(time.Second * time.Duration(30)),
+					ID:       id,
+				})
 				c.Write(packet)
 			} else {
-				if c.LastKeepAlive.Deadline.Before(time.Now()) {
-					c.Disconnect("Timed out")
+				for _, element := range list {
+					data := element.(player.KeepAliveData)
+					if data.Deadline.Before(time.Now()) {
+						c.Disconnect("Timed out")
+					}
 				}
 			}
 			c.Unlock()
@@ -379,13 +385,17 @@ func (s *Server) FinishLogin(profile player.PlayerProfile, connection *Connectio
 	s.playerLock.Unlock()
 	packet := protocol.NewResponse()
 	// send position and look packet
-	packet.WriteStructure(protocol.PositionAndLookPacket{
-		Location:   *pl.Location,
-		Flags:      0,
-		TeleportID: int32(rand.Intn(0xFFFE)),
-	})
-	connection.Write(packet.ToRawPacket(protocol.OutgoingPlayerPositionAndLookPacketId))
-	packet.Clear()
+	{
+		teleportId := int32(rand.Intn(0xFFFE))
+		packet.WriteStructure(protocol.PositionAndLookPacket{
+			Location:   *pl.Location,
+			Flags:      0,
+			TeleportID: teleportId,
+		})
+		connection.PendingTeleportConfirmations.Append(player.TeleportConfirmData{teleportId})
+		connection.Write(packet.ToRawPacket(protocol.OutgoingPlayerPositionAndLookPacketId))
+		packet.Clear()
+	}
 	// send abilities packet
 	packet.WriteStructure(protocol.PlayerAbilitiesPacket{
 		Flags:       0,

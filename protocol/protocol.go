@@ -251,25 +251,3 @@ const (
 	PlayerListItemActionUpdateDisplayName = 3
 	PlayerListItemActionRemovePlayer      = 4
 )
-
-// Chat
-type MessageMode int
-
-const (
-	// chat message (only for players)
-	ChatMessageMode MessageMode = iota
-	// system message (what you should use)
-	DefaultMessageMode
-	// action bar message
-	ActionBarMode
-)
-
-// Animation
-const (
-	SwingMainArmAnimation        = iota
-	TakeDamageAnimation
-	LeaveBedAnimation
-	SwingOffHandAnimation
-	CriticalEffectAnimation
-	MagicCriticalEffectAnimation
-)

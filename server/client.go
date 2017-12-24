@@ -6,10 +6,10 @@ import (
 	"github.com/olsdavis/goelan/log"
 	"github.com/olsdavis/goelan/player"
 	"github.com/olsdavis/goelan/protocol"
+	. "github.com/olsdavis/goelan/util"
 	"io"
 	"net"
 	"sync"
-	"time"
 )
 
 type ConnectionState int
@@ -45,11 +45,6 @@ func (reader FullReader) Read(p []byte) (int, error) {
 	return reader.R.Read(p)
 }
 
-type KeepAliveData struct {
-	Deadline time.Time
-	ID       int64
-}
-
 // Connection struct represents a connected client.
 type Connection struct {
 	server          *Server
@@ -67,7 +62,8 @@ type Connection struct {
 
 	Player *player.Player
 
-	LastKeepAlive KeepAliveData
+	PendingKeepAlives            *PendingList
+	PendingTeleportConfirmations *PendingList
 
 	connected bool
 	sync.Mutex
@@ -76,20 +72,19 @@ type Connection struct {
 // NewConnection creates a new connection from the given ReadWriter.
 func NewConnection(socket net.Conn, server *Server) *Connection {
 	return &Connection{
-		server:          server,
-		Writer:          socket,
-		Reader:          NewFullReader(socket),
-		writeChan:       make(chan *protocol.RawPacket),
-		exitChan:        make(chan int, 1),
-		ConnectionState: HandshakeState,
-		VerifyToken:     emptyArray,
-		VerifyUsername:  "",
-		Player:          nil,
-		LastKeepAlive: KeepAliveData{
-			ID: -1,
-		},
-		connected: true,
-		Mutex:     sync.Mutex{},
+		server:                       server,
+		Writer:                       socket,
+		Reader:                       NewFullReader(socket),
+		writeChan:                    make(chan *protocol.RawPacket),
+		exitChan:                     make(chan int, 1),
+		ConnectionState:              HandshakeState,
+		VerifyToken:                  emptyArray,
+		VerifyUsername:               "",
+		Player:                       nil,
+		PendingKeepAlives:            NewPendingList(),
+		PendingTeleportConfirmations: NewPendingList(),
+		connected:                    true,
+		Mutex:                        sync.Mutex{},
 	}
 }
 

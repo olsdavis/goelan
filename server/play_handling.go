@@ -1,8 +1,8 @@
 package server
 
 import (
-	"github.com/olsdavis/goelan/player"
 	"github.com/olsdavis/goelan/log"
+	"github.com/olsdavis/goelan/player"
 	. "github.com/olsdavis/goelan/protocol"
 )
 
@@ -26,11 +26,10 @@ func pluginMessageHandler(packet *RawPacket, sender *Connection) {
 
 func keepAliveHandler(packet *RawPacket, sender *Connection) {
 	id := packet.ReadLong()
-	if sender.LastKeepAlive.ID == id {
-		sender.Lock()
-		sender.LastKeepAlive.ID = -1
-		sender.Unlock()
-	}
+	sender.PendingKeepAlives.QueryAndComplete(func(test interface{}) bool {
+		data := test.(player.KeepAliveData)
+		return data.ID == id
+	})
 }
 
 func chatMessageHandler(packet *RawPacket, sender *Connection) {
@@ -40,7 +39,11 @@ func chatMessageHandler(packet *RawPacket, sender *Connection) {
 }
 
 func teleportConfirmHandler(packet *RawPacket, sender *Connection) {
-	//TODO: implement
+	id := packet.ReadVarint()
+	sender.PendingTeleportConfirmations.QueryAndComplete(func(test interface{}) bool {
+		data := test.(player.TeleportConfirmData)
+		return data.ID == id
+	})
 }
 
 func playerPositionAndLookHandler(packet *RawPacket, sender *Connection) {

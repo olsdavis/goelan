@@ -11,24 +11,6 @@ import (
 	"github.com/olsdavis/goelan/world"
 )
 
-// Represents server list ping response.
-type ServerListPing struct {
-	Ver  Version       `json:"version"`
-	Pl   Players       `json:"players"`
-	Desc ChatComponent `json:"description"`
-	Fav  string        `json:"favicon,omitempty"`
-}
-
-type Version struct {
-	Name     string `json:"name"`
-	Protocol uint32 `json:"protocol"`
-}
-
-type Players struct {
-	Max    uint `json:"max"`
-	Online uint `json:"online"`
-}
-
 type ChatComponent struct {
 	Text string `json:"text"`
 }
@@ -163,6 +145,7 @@ func (r *Response) WriteStructure(object interface{}) *Response {
 	case []byte:
 		r.WriteByteArray(object.([]byte))
 	case world.Location:
+		//TODO: fix
 		loc := object.(world.Location)
 		r.WriteDouble(float64(loc.X))
 		r.WriteDouble(float64(loc.Y))
