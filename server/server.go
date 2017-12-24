@@ -79,7 +79,7 @@ func CreateServer(properties ServerProperties) *Server {
 		properties:      properties,
 		clients:         make(map[string]*Connection),
 		playerLock:      sync.Mutex{},
-		serverVersion:   ServerVersion{"1.12.2", 340},
+		serverVersion:   ServerVersion{"Goelan 1.12.2", 340},
 		favicon:         "",
 		ticker:          nil,
 		keepAliveTicker: nil,
