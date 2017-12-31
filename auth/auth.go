@@ -12,13 +12,13 @@ import (
 )
 
 const (
-	BASE_URL = "https://sessionserver.mojang.com/session/minecraft/hasJoined?username=%v&serverId=%v"
+	baseUrl = "https://sessionserver.mojang.com/session/minecraft/hasJoined?username=%v&serverId=%v"
 )
 
 // Authenticates the current player.
 func Auth(username string, sharedSecret, publicKey []byte) (*PlayerProfile, error) {
 	digest := authDigest(sharedSecret, publicKey)
-	resp, err := http.Get(fmt.Sprintf(BASE_URL, username, digest))
+	resp, err := http.Get(fmt.Sprintf(baseUrl, username, digest))
 	if err != nil {
 		return nil, err
 	}
