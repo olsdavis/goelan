@@ -19,7 +19,6 @@ type Property struct {
 }
 
 type Player struct {
-	Name string
 	// key => the permission; value => true if the player has the permission
 	Permissions map[string]bool
 	Profile     PlayerProfile
@@ -37,4 +36,9 @@ func (player *Player) HasPermission(permission string) bool {
 // SetPermission sets whether the player will have the given permission or not.
 func (player *Player) SetPermission(permission string, can bool) {
 	player.Permissions[permission] = can
+}
+
+// GetName returns current player's name.
+func (player *Player) GetName() string {
+	return player.Profile.Name
 }

@@ -33,8 +33,8 @@ func keepAliveHandler(packet *RawPacket, sender *Connection) {
 }
 
 func chatMessageHandler(packet *RawPacket, sender *Connection) {
-	message := sender.Player.Name + " > " + packet.ReadString()
-	log.Info(sender.Player.Name, message)
+	message := sender.Player.GetName() + " > " + packet.ReadString()
+	log.Info(sender.Player.GetName(), message)
 	sender.SendMessage(message, ChatMessageMode)
 }
 

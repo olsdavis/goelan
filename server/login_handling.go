@@ -12,6 +12,8 @@ import (
 	"crypto/rand"
 	"github.com/olsdavis/goelan/log"
 	"github.com/olsdavis/goelan/util"
+	"github.com/olsdavis/goelan/player"
+	"github.com/olsdavis/goelan/world"
 )
 
 // This file contains all the handlers for the login state.
@@ -29,22 +31,45 @@ func loginStartHandler(packet *RawPacket, sender *Connection) {
 		return
 	}
 
-	// send encryption request
-	response := NewResponse()
-	token := encrypt.GenerateVerifyToken()
-	var encryptionRequest = struct {
-		ServerID    string
-		PublicKey   []byte
-		VerifyToken []byte
-	}{
-		"",
-		sender.GetServer().GetPublicKey(),
-		token,
+	if Get().IsOnlineMode() {
+		// send encryption request
+		response := NewResponse()
+		token := encrypt.GenerateVerifyToken()
+		var encryptionRequest = struct {
+			ServerID    string
+			PublicKey   []byte
+			VerifyToken []byte
+		}{
+			"",
+			sender.GetServer().GetPublicKey(),
+			token,
+		}
+		response.WriteStructure(encryptionRequest)
+		sender.Write(response.ToRawPacket(EncryptionRequestPacketId))
+		sender.VerifyToken = token
+		sender.VerifyUsername = username
+	} else {
+		// log in now
+		offlineUUID := "OfflinePlayer:" + username
+		uuid, err := util.NameToUUID(offlineUUID)
+		if err != nil {
+			sender.Disconnect("Error encountered during connection: " + err.Error())
+			return
+		}
+		profile := player.PlayerProfile{
+			RealUUID:   uuid,
+			UUID:       offlineUUID,
+			Properties: nil,
+			Name:       username,
+		}
+		initializePlayer(profile, sender)
+		processLogin(sender, &player.PlayerProfile{
+			Name:       sender.Player.GetName(),
+			UUID:       offlineUUID,
+			Properties: nil,
+			RealUUID:   uuid,
+		}, nil)
 	}
-	response.WriteStructure(encryptionRequest)
-	sender.Write(response.ToRawPacket(EncryptionRequestPacketId))
-	sender.VerifyToken = token
-	sender.VerifyUsername = username
 }
 
 // Handles the encryption request packet.
@@ -81,18 +106,32 @@ func encryptionResponseHandler(packet *RawPacket, sender *Connection) {
 		log.Error("Error while connecting to Mojang servers:", err)
 		return
 	}
+	processLogin(sender, profile, sharedSecret)
+}
+
+func processLogin(sender *Connection, profile *player.PlayerProfile, sharedSecret []byte) {
 	// Login Success packet
 	response := NewResponse()
-	var loginSuccess = struct {
-		UUID string
-		Name string
-	}{
-		util.ToHypenUUID(profile.UUID),
-		profile.Name,
+	{
+		var uuid string
+		if Get().IsOnlineMode() {
+			uuid = util.ToHyphenUUID(profile.UUID)
+		} else {
+			uuid = profile.RealUUID.String()
+		}
+		var loginSuccess = struct {
+			UUID string
+			Name string
+		}{
+			uuid,
+			profile.Name,
+		}
+		response.WriteStructure(loginSuccess)
+		sender.Write(response.ToRawPacket(LoginSuccessPacketId))
 	}
-	response.WriteStructure(loginSuccess)
-	sender.Write(response.ToRawPacket(LoginSuccessPacketId))
-	sender.SharedSecret = sharedSecret
+	if sharedSecret != nil {
+		sender.SharedSecret = sharedSecret
+	}
 	// release the data we don't need anymore
 	sender.VerifyToken = emptyArray
 	sender.VerifyUsername = ""
@@ -125,4 +164,24 @@ func encryptionResponseHandler(packet *RawPacket, sender *Connection) {
 	sender.Write(response.WriteStructure(joinGame).ToRawPacket(JoinGamePacketId))
 	response.Clear()
 	sender.GetServer().FinishLogin(*profile, sender)
+}
+
+func initializePlayer(profile player.PlayerProfile, sender *Connection) {
+	pl := player.Player{
+		Permissions: nil,
+		Profile:     profile,
+		Settings:    &player.ClientSettings{},
+		Location: &world.Location{
+			Location3f: world.Location3f{
+				X: 0,
+				Y: 80,
+				Z: 0,
+			},
+			Orientation: world.Orientation{
+				Yaw:   90,
+				Pitch: 0,
+			},
+		},
+	}
+	sender.Player = &pl
 }

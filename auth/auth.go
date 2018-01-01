@@ -32,7 +32,7 @@ func Auth(username string, sharedSecret, publicKey []byte) (*PlayerProfile, erro
 	if err != nil {
 		return nil, err
 	}
-	realUniqueId, err := util.StringToUUID(util.ToHypenUUID(profile.UUID))
+	realUniqueId, err := util.StringToUUID(util.ToHyphenUUID(profile.UUID))
 	if err != nil {
 		panic(err)
 	}

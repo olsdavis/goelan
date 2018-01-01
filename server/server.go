@@ -333,7 +333,7 @@ func (s *Server) handleConnection(conn net.Conn) {
 		s.playerLock.Unlock()
 
 		// broadcast
-		message := c.Player.Name + " has left the server."
+		message := c.Player.GetName() + " has left the server."
 		s.BroadcastMessage(message, protocol.DefaultMessageMode)
 		log.Info(message)
 	}
@@ -362,24 +362,7 @@ func (s *Server) CanConnect(username, uuid string) (bool, string) {
 // the server.
 func (s *Server) FinishLogin(profile player.PlayerProfile, connection *Connection) {
 	// TODO: Load permissions
-	pl := player.Player{
-		Name:        profile.Name,
-		Permissions: make(map[string]bool),
-		Profile:     profile,
-		Settings:    &player.ClientSettings{},
-		Location: &world.Location{
-			Location3f: world.Location3f{
-				X: 0,
-				Y: 80,
-				Z: 0,
-			},
-			Orientation: world.Orientation{
-				Yaw:   90,
-				Pitch: 0,
-			},
-		},
-	}
-	connection.Player = &pl
+	pl := connection.Player
 	s.playerLock.Lock()
 	s.clients[pl.Profile.UUID] = connection
 	s.playerLock.Unlock()
@@ -444,7 +427,7 @@ func (s *Server) GetPlayerByName(username string) (bool, *Connection) {
 	defer s.playerLock.Unlock()
 	s.playerLock.Lock()
 	for _, conn := range s.clients {
-		if conn.Player.Name == username {
+		if conn.Player.GetName() == username {
 			return true, conn
 		}
 	}

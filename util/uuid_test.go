@@ -8,7 +8,7 @@ var (
 )
 
 func TestToHypenUUID(t *testing.T) {
-	if hyphens := ToHypenUUID(uuid); expected != hyphens {
+	if hyphens := ToHyphenUUID(uuid); expected != hyphens {
 		t.Error("Expected " + expected + " and got: " + hyphens)
 	}
 }
@@ -31,6 +31,6 @@ func TestIsValidUsername(t *testing.T) {
 func BenchmarkHypenUUID(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		ToHypenUUID(uuid)
+		ToHyphenUUID(uuid)
 	}
 }
