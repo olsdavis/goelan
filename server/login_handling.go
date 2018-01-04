@@ -106,6 +106,7 @@ func encryptionResponseHandler(packet *RawPacket, sender *Connection) {
 		log.Error("Error while connecting to Mojang servers:", err)
 		return
 	}
+	initializePlayer(*profile, sender)
 	processLogin(sender, profile, sharedSecret)
 }
 
