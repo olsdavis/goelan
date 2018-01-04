@@ -10,4 +10,4 @@ If you want contribute to the project, your commit must follow these commit rule
 | :construction: WIP (Work In Progress)      | `:construction:` |
 | :memo: Documentation (or text-only commit) | `:memo:`         |
 | :hammer: Miscellaneous                     | `:hammer:`       |
-
+| :fire: Quick fix                           | `:fire:`         |
