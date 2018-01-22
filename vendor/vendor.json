@@ -39,10 +39,10 @@
 			"revisionTime": "2017-05-10T07:48:58Z"
 		},
 		{
-			"checksumSHA1": "xfQXo6jzkBE0RSBj/VMllOPNri0=",
+			"checksumSHA1": "cANB9e6+es4kITUtL9EbBJrXuPY=",
 			"path": "github.com/olsdavis/justlog",
-			"revision": "c4ce6fcc5c36339837a820c8bf1714925895df65",
-			"revisionTime": "2017-09-10T12:14:27Z"
+			"revision": "f1f50a0b4c87a012ab034f24db9fa9aab4974f21",
+			"revisionTime": "2018-01-20T21:35:48Z"
 		}
 	],
 	"rootPath": "github.com/olsdavis/goelan"

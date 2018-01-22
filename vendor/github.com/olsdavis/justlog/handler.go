@@ -225,14 +225,14 @@ type fileHandler struct {
 // path is the path to your file.
 // levels are the levels that you want your Handler to handle.
 func NewFileHandler(path string, levels ...LogLevel) Handler {
-	return fileHandler{
+	return &fileHandler{
 		leveled: leveled{levels},
 		path: path,
 		file: nil,
 	}
 }
 
-func (handler fileHandler) Handle(log Log) {
+func (handler *fileHandler) Handle(log Log) {
 	// init file stream
 	if handler.file == nil {
 		if _, err := os.Stat(handler.path); os.IsNotExist(err) {
@@ -270,7 +270,7 @@ type consoleHandler struct {
 // NewConsoleHandler creates and returns a Handler which prints every log
 // message that it has access to (according to its level(s)) to the console
 func NewConsoleHandler(levels ...LogLevel) Handler {
-	return consoleHandler{leveled{levels}}
+	return &consoleHandler{leveled{levels}}
 }
 
 func (handler consoleHandler) Handle(log Log) {
