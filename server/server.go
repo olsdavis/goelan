@@ -389,10 +389,9 @@ func (s *Server) FinishLogin(profile player.PlayerProfile, connection *Connectio
 	packet.Clear()
 	connection.AddPlayers(s.GetAllPlayers())
 	s.ForEachPlayerSync(func(c *Connection) {
-		if c.Player.Profile.UUID == connection.Player.Profile.UUID {
-			return
+		if c.Player.Profile.UUID != connection.Player.Profile.UUID {
+			c.AddPlayers([]*player.Player{connection.Player})
 		}
-		c.AddPlayers([]*player.Player{connection.Player})
 	})
 	// announce login in chat and logs
 	message := profile.Name + " has joined the server."
