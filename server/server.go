@@ -298,12 +298,17 @@ func (s *Server) loadFavicon() {
 
 // Stop stops the server.
 func (s *Server) Stop() {
+	var err error
+
 	s.run = false
 	s.ForEachPlayerSync(func(c *Connection) {
 		c.Disconnect("Server closed.")
 	})
 	s.ticker.Stop()
-	s.BanList.SaveFile(banListFile)
+	err = s.BanList.SaveFile(banListFile)
+	if err != nil {
+		log.Error("Could not save ban list file. If some modifications have been done since the last back-up, they have not been saved. Error's reason:", err)
+	}
 	close(s.ExitChan)
 }
 
